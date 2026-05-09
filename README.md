@@ -5,46 +5,33 @@
 
 ## Concept
 
-An integrated, voice-first companion app that turns a senior's medical appointment into a tracked, dialect-friendly journey — from appointment letter to "home safe" — with one dashboard for the caregiver.
+A caregiver app that streamlines discovery and booking of subsidised Medical Escort & Transport (MET) services in Singapore. The flagship moment is the **cost comparison** between commercial ride-hail (Grab/taxi) and subsidised MET — surfacing the savings so caregivers don't default to the expensive option out of habit. After booking, the caregiver gets a live, delivery-style trip tracker.
 
-Three surfaces, one backend:
-- **Senior PWA / SMS-IVR**: voice-first, dialect-friendly (Mandarin, Hokkien, Teochew, Malay, Tamil).
-- **Caregiver dashboard**: live, delivery-style stage tracker for the senior's full appointment journey.
-- **Driver / volunteer app**: pickup, accessibility notes, geofenced stage transitions.
+## Core flows
 
-## Killer differentiator
+1. **Eligibility wizard** — 4 questions → soft subsidy verdict (subsidy %, co-pay range).
+2. **Cost comparison** — Grab vs MET side-by-side with per-trip and yearly savings.
+3. **Provider directory** — community providers serving the senior's postal area. Each provider has a `tel:` Call button; booking is confirmed by phone, matching the real-world process.
+4. **Live trip tracker** — 6-stage stepper, pushed live to the caregiver via WebSocket from a Durable Object.
 
-Treat each appointment as a tracked journey with explicit stages — like a parcel delivery:
-
-```
-Letter received → Translated → Confirmed
-Driver assigned → En route to pickup → Senior boarded
-Arrived at hospital → Checked in → In consult
-At pharmacy → Bill paid
-Return ride dispatched → Home safe
-```
-
-Each stage is a real state-machine transition (Cloudflare Durable Object), advanced by driver taps, geofence crossings, or senior voice confirmations. Caregiver gets live updates instead of refresh-calling.
+The 6 stages: Application sent → Confirmed by provider → Driver assigned → En route to pickup → Senior boarded → Arrived at hospital.
 
 ## Stack
 
-- **Cloudflare Workers** + Durable Objects (per-trip state machine), D1, KV, R2, Queues.
-- **Cloudflare Workers AI / SEA-LION** (AI Singapore) — translation, dialect summaries, voice.
-- **OpenAI** — Vision OCR of appointment letters; Whisper for consult transcription.
-- **Lovable** — three PWA frontends.
-- **Twilio** (stretch) — SMS / IVR fallback for non-smartphone seniors.
+- **Cloudflare Workers** + **Hono** for the API.
+- **Cloudflare D1** for caregivers, seniors, providers, trips, and the trip-event log.
+- **Cloudflare Durable Objects** — one `TripRoom` per trip; holds live stage state and fans out WebSocket updates.
+- **TypeScript**.
 
-## MVP golden path (Demo Day)
+## Repo layout
 
-1. Caregiver photographs an appointment letter → OCR + SEA-LION extraction → confirmed in dashboard (English) and senior app (dialect).
-2. Trip state machine advances through 6–8 stages, with one geofence trigger.
-3. Caregiver sees live updates via WebSocket. "Home safe" push at the end.
+- `backend/` — Cloudflare Worker. Schema, seed, full API, README with curl examples.
 
-## Pain points anchored in the pitch (pick 2–3)
+## Pain points anchored in the pitch
 
-1. **Appointment letter literacy** — dense English letters that dialect-speaking seniors can't read.
-2. **Caregiver visibility gap** — no idea where the senior is or what stage of the trip they're at.
-3. **Return-ride overrun** — consult runs 90 min late, original return ride is wasted, senior strands.
+1. **Discovery gap** — many eligible seniors never apply for the AIC-coordinated MET subsidy. The eligibility wizard surfaces a credible verdict in 30 seconds.
+2. **Caregiver visibility gap** — phone-tag with provider replaced by a live, delivery-style stage tracker.
+3. **Default-Grab habit** — cost-compare screen converts a $32–$38 ride into a ~$10–14 subsidised one.
 
 ## Team
 
