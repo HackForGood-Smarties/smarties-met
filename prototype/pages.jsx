@@ -212,15 +212,15 @@ function HomePage() {
             <a href="#/profile" className="focus-ring rounded-2xl">
               <Card className="p-4 h-full">
                 <div className="h-10 w-10 rounded-xl bg-goldSoft text-ink inline-flex items-center justify-center"><Icon name="spark" /></div>
-                <p className="font-semibold mt-3 text-ink leading-snug">Apply subsidy code</p>
+                <p className="font-semibold mt-3 text-ink leading-snug">{t("hm.applyCodeQa")}</p>
               </Card>
             </a>
           ) : (
             <a href="#/profile" className="focus-ring rounded-2xl">
               <Card className="p-4 h-full">
                 <div className="h-10 w-10 rounded-xl bg-greenSoft text-green inline-flex items-center justify-center"><Icon name="check" /></div>
-                <p className="font-semibold mt-3 text-ink leading-snug">Subsidy: {subsidyPct}%</p>
-                <p className="text-mute text-xs mt-0.5">View details</p>
+                <p className="font-semibold mt-3 text-ink leading-snug">{t("hm.subsidyQa")}: {subsidyPct}%</p>
+                <p className="text-mute text-xs mt-0.5">{t("hm.viewDetails")}</p>
               </Card>
             </a>
           )}
@@ -597,7 +597,7 @@ function TripNewPage() {
                 ${metLow}{metHigh !== metLow ? `–${metHigh}` : ""}
               </p>
               {!hasSubsidy && (
-                <p className="text-mute text-xs mt-1">Apply a subsidy code to save up to 80%.</p>
+                <p className="text-mute text-xs mt-1">{t("tn.applyCodeHint")}</p>
               )}
             </div>
             <ul className="mt-4 space-y-1.5 text-ink text-[13px] leading-snug flex-1">
@@ -1004,7 +1004,7 @@ function TripTrackerPage({ tripId }) {
 
       {/* Live map */}
       <div className="px-5 mt-5">
-        <TripMap active={active} placeholderText={t("tk.mapPlaceholder")} />
+        <TripMap active={active} placeholderText={t("tk.mapPlaceholder")} hospital={trip.hospital} />
       </div>
 
       {/* Notify toggle */}
@@ -1039,39 +1039,65 @@ function TripTrackerPage({ tripId }) {
 
 /* ───────────────────────── TRIP MAP (real basemap, sim driver) ───────────────────────── */
 
-// Singapore coordinates for the seeded trip.
-//  HOME    : 234 Ang Mo Kio Ave 3 — pickup
-//  DEPOT   : provider depot (driver start point), east of home
-//  HOSPITAL: Singapore General Hospital, Outram
+// Pickup origin + provider depot for the seeded caregiver. Real-world
+// data would come from the senior's address; we keep AMK Ave 3 fixed
+// for the demo since that's where Madam Lim lives.
 const MAP_HOME     = [1.3717, 103.8443];
 const MAP_DEPOT    = [1.3691, 103.8492];
-const MAP_HOSPITAL = [1.2786, 103.8338];
+
+// Hospital lat/lng + short-label dictionary. Falls back to SGH for any
+// hospital we don't recognise.
+const HOSPITAL_COORDS = {
+  "Singapore General Hospital": { coords: [1.2786, 103.8358], label: "SGH" },
+  "Khoo Teck Puat Hospital":    { coords: [1.4242, 103.8388], label: "KTPH" },
+  "AMK Polyclinic":              { coords: [1.3756, 103.8447], label: "AMK PC" },
+  "Tan Tock Seng Hospital":     { coords: [1.3216, 103.8460], label: "TTSH" },
+  "National Heart Centre":      { coords: [1.2783, 103.8344], label: "NHC" },
+};
+const DEFAULT_HOSPITAL = HOSPITAL_COORDS["Singapore General Hospital"];
+
+function hospitalInfo(name) {
+  if (!name) return DEFAULT_HOSPITAL;
+  if (HOSPITAL_COORDS[name]) return HOSPITAL_COORDS[name];
+  // Soft match — handle minor name variations like "Singapore General Hospital (SGH)"
+  const key = Object.keys(HOSPITAL_COORDS).find(
+    (k) => name.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(name.toLowerCase()),
+  );
+  return key ? HOSPITAL_COORDS[key] : { coords: DEFAULT_HOSPITAL.coords, label: name.split(" ").slice(0, 2).join(" ") };
+}
 
 // Map of stage -> position along route.
 //   stage 2 (Driver assigned)   : depot
 //   stage 3 (En route to pickup): mostly to home
 //   stage 4 (Senior boarded)    : at home, just departed
 //   stage 5 (Arrived at hospital): at hospital
-function driverTargetForStage(stage) {
+function driverTargetForStage(stage, hospitalCoords) {
   if (stage <= 2) return MAP_DEPOT;
   if (stage === 3) return lerpLatLng(MAP_DEPOT, MAP_HOME, 0.85);
   if (stage === 4) return MAP_HOME;
-  return MAP_HOSPITAL;
+  return hospitalCoords;
 }
 function lerpLatLng(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 }
 
-function TripMap({ active, placeholderText }) {
+function TripMap({ active, placeholderText, hospital }) {
   const containerRef = useRefP(null);
   const mapRef = useRefP(null);
   const driverRef = useRefP(null);
+  const hospitalLayerRef = useRefP(null);
+  const routeLayerRef = useRefP(null);
   const animRef = useRefP(null);
 
-  // One-time map init.
+  const { coords: hospitalCoords, label: hospitalLabel } = useMemoP(
+    () => hospitalInfo(hospital),
+    [hospital],
+  );
+
+  // One-time map init (basemap + home marker + driver marker).
   useEffectP(() => {
     if (!containerRef.current || mapRef.current) return;
-    if (typeof window.L === "undefined") return; // Leaflet failed to load — fallback shown below
+    if (typeof window.L === "undefined") return;
 
     const L = window.L;
     const map = L.map(containerRef.current, {
@@ -1082,13 +1108,11 @@ function TripMap({ active, placeholderText }) {
     });
     mapRef.current = map;
 
-    // OneMap (Singapore Land Authority) basemap — free, no key required.
     L.tileLayer("https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png", {
       maxZoom: 19,
       minZoom: 11,
     }).addTo(map);
 
-    // Subtle attribution required by OneMap.
     L.control
       .attribution({ position: "bottomleft", prefix: "" })
       .addAttribution(
@@ -1102,12 +1126,6 @@ function TripMap({ active, placeholderText }) {
       iconSize: [80, 24],
       iconAnchor: [12, 12],
     });
-    const hospitalIcon = L.divIcon({
-      className: "smarties-pin",
-      html: '<span class="smarties-pin-hospital">🏥 SGH</span>',
-      iconSize: [80, 24],
-      iconAnchor: [12, 12],
-    });
     const driverIcon = L.divIcon({
       className: "smarties-pin",
       html: '<div class="smarties-pin-driver">🚐</div>',
@@ -1116,14 +1134,6 @@ function TripMap({ active, placeholderText }) {
     });
 
     L.marker(MAP_HOME, { icon: homeIcon }).addTo(map);
-    L.marker(MAP_HOSPITAL, { icon: hospitalIcon }).addTo(map);
-
-    L.polyline([MAP_DEPOT, MAP_HOME, MAP_HOSPITAL], {
-      color: "#0B2545",
-      weight: 3,
-      dashArray: "6 6",
-      opacity: 0.55,
-    }).addTo(map);
 
     const driver = L.marker(MAP_DEPOT, {
       icon: driverIcon,
@@ -1132,9 +1142,6 @@ function TripMap({ active, placeholderText }) {
     }).addTo(map);
     driverRef.current = driver;
 
-    map.fitBounds(L.latLngBounds([MAP_HOME, MAP_HOSPITAL]).pad(0.35));
-
-    // Keep the map sized correctly when the phone column resizes.
     setTimeout(() => map.invalidateSize(), 50);
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(containerRef.current);
@@ -1144,8 +1151,37 @@ function TripMap({ active, placeholderText }) {
       map.remove();
       mapRef.current = null;
       driverRef.current = null;
+      hospitalLayerRef.current = null;
+      routeLayerRef.current = null;
     };
   }, []);
+
+  // Hospital marker + route polyline rebuild whenever the hospital changes.
+  useEffectP(() => {
+    const map = mapRef.current;
+    if (!map || typeof window.L === "undefined") return;
+    const L = window.L;
+
+    if (hospitalLayerRef.current) map.removeLayer(hospitalLayerRef.current);
+    if (routeLayerRef.current) map.removeLayer(routeLayerRef.current);
+
+    const hospitalIcon = L.divIcon({
+      className: "smarties-pin",
+      html: `<span class="smarties-pin-hospital">🏥 ${hospitalLabel}</span>`,
+      iconSize: [80, 24],
+      iconAnchor: [12, 12],
+    });
+    hospitalLayerRef.current = L.marker(hospitalCoords, { icon: hospitalIcon }).addTo(map);
+
+    routeLayerRef.current = L.polyline([MAP_DEPOT, MAP_HOME, hospitalCoords], {
+      color: "#0B2545",
+      weight: 3,
+      dashArray: "6 6",
+      opacity: 0.55,
+    }).addTo(map);
+
+    map.fitBounds(L.latLngBounds([MAP_HOME, hospitalCoords]).pad(0.35));
+  }, [hospitalCoords[0], hospitalCoords[1], hospitalLabel]);
 
   // React to stage changes — animate the driver marker smoothly.
   useEffectP(() => {
@@ -1157,7 +1193,7 @@ function TripMap({ active, placeholderText }) {
     driver.setOpacity(visible ? 1 : 0);
     if (!visible) return;
 
-    const target = driverTargetForStage(active);
+    const target = driverTargetForStage(active, hospitalCoords);
     const startLatLng = driver.getLatLng();
     const start = [startLatLng.lat, startLatLng.lng];
     const startTime = performance.now();
@@ -1173,11 +1209,10 @@ function TripMap({ active, placeholderText }) {
     };
     animRef.current = requestAnimationFrame(tick);
 
-    // Pan the camera to keep the driver in view as it moves.
     if (active === 3 || active === 4 || active === 5) {
       map.flyTo(target, active === 5 ? 14 : 13, { duration: 1.4 });
     }
-  }, [active]);
+  }, [active, hospitalCoords[0], hospitalCoords[1]]);
 
   return (
     <div className="aspect-[16/10] rounded-2xl border border-line overflow-hidden relative bg-paper2">
@@ -1333,7 +1368,7 @@ function ProfilePage() {
             </span>
           </div>
           <Divider className="my-4" />
-          <p className="text-mute text-xs">Caring for <span className="text-ink font-semibold">{senior.name}</span> · {senior.age}</p>
+          <p className="text-mute text-xs">{t("hm.caring")} <span className="text-ink font-semibold">{senior.name}</span> · {senior.age}</p>
         </Card>
       </div>
 
@@ -1350,20 +1385,20 @@ function ProfilePage() {
               <Divider className="my-4" />
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-mute text-xs font-semibold uppercase tracking-wide">Active subsidy</p>
+                  <p className="text-mute text-xs font-semibold uppercase tracking-wide">{t("pr.activeSubsidy")}</p>
                   <p className="text-ink font-bold text-[28px] leading-none mt-1 tracking-tight">{subsidyPct}%</p>
                 </div>
-                <Pill tone="green"><Icon name="check" size={12} /> Verified</Pill>
+                <Pill tone="green"><Icon name="check" size={12} /> {t("pr.verified")}</Pill>
               </div>
               <button
                 className="focus-ring mt-3 text-mute hover:text-danger text-[11px] font-semibold underline underline-offset-2"
                 onClick={async () => {
-                  if (!window.confirm("Reset subsidy back to none? (demo only)")) return;
+                  if (!window.confirm(t("pr.resetConfirm"))) return;
                   await apiFetch("/api/demo/reset-subsidy", { method: "POST" }).catch(() => {});
                   window.location.reload();
                 }}
               >
-                Reset subsidy (demo)
+                {t("pr.resetSubsidy")}
               </button>
             </>
           )}
@@ -1372,16 +1407,16 @@ function ProfilePage() {
 
       {/* Inline promo code redemption */}
       <section className="px-5 mt-5">
-        <p className="text-mute text-xs font-semibold uppercase tracking-wide mb-2">Subsidy code</p>
+        <p className="text-mute text-xs font-semibold uppercase tracking-wide mb-2">{t("pr.subCodeHead")}</p>
         <Card className="p-5">
           {phase !== "ok" && (
             <>
               <div className="flex items-start gap-3">
                 <span className="h-10 w-10 rounded-xl bg-goldSoft text-ink inline-flex items-center justify-center shrink-0"><Icon name="spark" /></span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-ink font-semibold">Apply a subsidy code</p>
+                  <p className="text-ink font-semibold">{t("pr.applyCodeTitle")}</p>
                   <p className="text-mute text-xs mt-0.5 leading-snug">
-                    Paste a signed code issued by your polyclinic, hospital MSW, or social service agency.
+                    {t("pr.applyCodeDesc")}
                   </p>
                 </div>
               </div>
@@ -1390,7 +1425,7 @@ function ProfilePage() {
                 spellCheck={false}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="SMRT.eyJ2IjoxLCJp…"
+                placeholder="SMRT.AXDyuVvb…"
                 className="focus-ring mt-3 w-full bg-paper2/60 border border-line rounded-lg px-3 py-2.5 text-ink font-mono text-[12px] leading-snug break-all"
               />
               {error && (
@@ -1404,27 +1439,27 @@ function ProfilePage() {
                 onClick={submitPromo}
                 disabled={!code.trim() || phase === "verifying"}
               >
-                {phase === "verifying" ? "Verifying signature…" : "Verify & apply"}
+                {phase === "verifying" ? t("pr.verifying") : t("pr.verifyApply")}
               </Btn>
             </>
           )}
           {phase === "ok" && result && (
             <div className="text-center py-2">
               <div className="mx-auto h-14 w-14 rounded-full bg-greenSoft text-green inline-flex items-center justify-center"><Icon name="check" size={32} /></div>
-              <p className="mt-3 text-ink font-bold text-[17px]">Code validated · subsidy applied</p>
-              <p className="text-mute text-sm mt-0.5">Issued by <span className="text-ink font-semibold">{result.issuer}</span> · valid until {result.valid_until}</p>
+              <p className="mt-3 text-ink font-bold text-[17px]">{t("pr.codeValidated")}</p>
+              <p className="text-mute text-sm mt-0.5">{t("pr.issuedBy")} <span className="text-ink font-semibold">{result.issuer}</span> · {t("pr.validUntil")} {result.valid_until}</p>
               <div className="grid grid-cols-2 gap-4 mt-4 text-left">
                 <div className="rounded-xl bg-paper2/60 border border-line p-3">
-                  <p className="text-mute text-[10px] font-semibold uppercase tracking-wide">New subsidy</p>
+                  <p className="text-mute text-[10px] font-semibold uppercase tracking-wide">{t("pr.newSubsidy")}</p>
                   <p className="text-ink font-bold text-[28px] tracking-tight leading-none mt-1">{result.tier}<span className="text-base">%</span></p>
                 </div>
                 <div className="rounded-xl bg-paper2/60 border border-line p-3">
-                  <p className="text-mute text-[10px] font-semibold uppercase tracking-wide">New co-pay</p>
+                  <p className="text-mute text-[10px] font-semibold uppercase tracking-wide">{t("pr.newCopay")}</p>
                   <p className="text-ink font-bold text-[22px] tracking-tight leading-none mt-1">${result.copay_low}–${result.copay_high}</p>
                 </div>
               </div>
               <Btn kind="outline" size="md" className="mt-4 w-full" onClick={() => { setPhase("idle"); setCode(""); setResult(null); }}>
-                Apply another code
+                {t("pr.applyAnother")}
               </Btn>
             </div>
           )}
@@ -1456,7 +1491,7 @@ function ProfilePage() {
             window.location.reload();
           }}
         >
-          Sign out of Singpass
+          {t("pr.signOut")}
         </Btn>
       </section>
 
