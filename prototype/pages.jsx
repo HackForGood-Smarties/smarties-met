@@ -515,18 +515,20 @@ function TripNewPage() {
     prevPickupRef.current = pickupLocal;
   }, [pickupLocal]);
 
-  // Safety net: if return is somehow before/equal to pickup (e.g. a stale
-  // draft), bump it to pickup + 2h.
+  // Safety net: return must (a) be after pickup and (b) sit on the same
+  // calendar day. If either is violated — stale draft, manual edit to a
+  // later date — snap back to pickup + 2h, capped at 23:00 same day.
   useEffectP(() => {
     const pickupIso = localInputToIso(pickupLocal);
     const returnIso = localInputToIso(returnLocal);
-    if (pickupIso && returnIso && new Date(returnIso) <= new Date(pickupIso)) {
-      setReturnLocal(
-        isoToLocalInput(
-          new Date(new Date(pickupIso).getTime() + 2 * 60 * 60_000).toISOString(),
-        ),
-      );
-    }
+    if (!pickupIso || !returnIso) return;
+    const sameDay = pickupIso.slice(0, 10) === returnIso.slice(0, 10);
+    if (sameDay && new Date(returnIso) > new Date(pickupIso)) return;
+    const pickupMs = new Date(pickupIso).getTime();
+    const targetMs = pickupMs + 2 * 60 * 60_000;
+    const dayEndMs = new Date(pickupIso.slice(0, 10) + "T23:00:00+08:00").getTime();
+    const cappedMs = Math.min(targetMs, dayEndMs);
+    setReturnLocal(isoToLocalInput(new Date(cappedMs).toISOString()));
   }, [pickupLocal, returnLocal]);
 
   // Persist any change to the draft so the next screen sees the latest.
@@ -641,6 +643,8 @@ function TripNewPage() {
                     <input
                       type="datetime-local"
                       value={returnLocal}
+                      min={pickupLocal}
+                      max={pickupLocal ? `${pickupLocal.slice(0, 10)}T23:59` : undefined}
                       onChange={(e) => setReturnLocal(e.target.value)}
                       className="focus-ring mt-1 w-full bg-paper2/60 border border-line rounded-lg px-3 py-2 text-ink font-semibold text-[15px] tabular-nums"
                     />
