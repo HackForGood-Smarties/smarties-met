@@ -470,7 +470,6 @@ function TripNewPage() {
       : isoToLocalInput(defaultPickup()),
   );
 
-  const save = Math.round((trip.grabLow + trip.grabHigh) / 2 - trip.metPrice);
   const home = senior.home || trip.home || "234 Ang Mo Kio Ave 3";
 
   // Persist any change to the draft so the next screen sees the latest.
@@ -592,17 +591,6 @@ function TripNewPage() {
               ))}
             </ul>
             <a href="#/providers"><Btn kind="primary" size="md" className="mt-4 w-full">{t("tn.metBtn")} <Icon name="right" size={16} /></Btn></a>
-          </div>
-        </div>
-      </div>
-
-      {/* Savings strip */}
-      <div className="px-5 mt-4">
-        <div className="rounded-2xl bg-greenSoft border border-green/30 p-4 flex items-start gap-3">
-          <span className="h-9 w-9 rounded-full bg-green text-white inline-flex items-center justify-center shrink-0"><Icon name="check" size={18} /></span>
-          <div className="text-[15px] leading-snug">
-            <p className="text-green font-bold">{t("tn.youSave")} ~${save} {t("tn.perTrip")}</p>
-            <p className="text-green/90 mt-0.5">{t("tn.yearly")}</p>
           </div>
         </div>
       </div>
