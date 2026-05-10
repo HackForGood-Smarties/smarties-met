@@ -138,8 +138,15 @@ function useApi(path, deps) {
 
 function HomePage() {
   const { t } = useI18n();
-  const senior = window.AppData.SENIOR;
+  const fallbackSenior = window.AppData.SENIOR;
   const { data, loading } = useApi("/api/trips");
+  const meApi = useApi("/api/me");
+  const seniorFromApi = meApi.data && meApi.data.seniors && meApi.data.seniors[0];
+  const senior = seniorFromApi || fallbackSenior;
+  const subsidyPct =
+    seniorFromApi && typeof seniorFromApi.subsidy_pct === "number"
+      ? seniorFromApi.subsidy_pct
+      : null;
   const upcoming = (data && data.upcoming) || [];
   const fallback = window.AppData.TRIP;
   const next = upcoming[0]; // newest upcoming, or undefined
@@ -204,12 +211,22 @@ function HomePage() {
               <p className="font-semibold mt-3 text-ink leading-snug">{t("hm.bookNew")}</p>
             </Card>
           </a>
-          <a href="#/onboarding" className="focus-ring rounded-2xl">
-            <Card className="p-4 h-full">
-              <div className="h-10 w-10 rounded-xl bg-greenSoft text-green inline-flex items-center justify-center"><Icon name="shield" /></div>
-              <p className="font-semibold mt-3 text-ink leading-snug">{t("hm.checkElig")}</p>
-            </Card>
-          </a>
+          {subsidyPct === null ? (
+            <a href="#/profile" className="focus-ring rounded-2xl">
+              <Card className="p-4 h-full">
+                <div className="h-10 w-10 rounded-xl bg-goldSoft text-ink inline-flex items-center justify-center"><Icon name="spark" /></div>
+                <p className="font-semibold mt-3 text-ink leading-snug">Apply subsidy code</p>
+              </Card>
+            </a>
+          ) : (
+            <a href="#/profile" className="focus-ring rounded-2xl">
+              <Card className="p-4 h-full">
+                <div className="h-10 w-10 rounded-xl bg-greenSoft text-green inline-flex items-center justify-center"><Icon name="check" /></div>
+                <p className="font-semibold mt-3 text-ink leading-snug">Subsidy: {subsidyPct}%</p>
+                <p className="text-mute text-xs mt-0.5">View details</p>
+              </Card>
+            </a>
+          )}
         </div>
       </section>
 
@@ -1354,7 +1371,7 @@ function ProfilePage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-ink font-semibold">Apply a subsidy code</p>
                   <p className="text-mute text-xs mt-0.5 leading-snug">
-                    Paste a signed code issued by your polyclinic, hospital MSW, or social service agency. We verify the signature on-device.
+                    Paste a signed code issued by your polyclinic, hospital MSW, or social service agency.
                   </p>
                 </div>
               </div>

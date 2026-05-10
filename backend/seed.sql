@@ -63,19 +63,13 @@ INSERT INTO trips (
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital', 'Outram Rd, Singapore 169608',
    '2026-05-15T09:00:00+08:00', '2026-05-15T09:35:00+08:00',
    'Mr. Tan', 'Toyota Hiace', 'SGW 8421C', 'Mei Ling',
-   12, 32, 38, 1),
+   42, 32, 38, 1),
   ('trip_upcoming_2', 'MET-77B0C2', 'cg_weiming', 'sn_madamlim', 'blossom',
    'confirmed', 2,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic', '21 Ang Mo Kio Central 2, Singapore 569666',
    '2026-05-21T14:30:00+08:00', '2026-05-21T14:50:00+08:00',
    'Ms. Wong', 'Toyota Hiace', 'SGZ 5142A', 'Suriani',
-   8, 18, 22, 0),
-  ('trip_upcoming_3', 'MET-3D9E11', 'cg_weiming', 'sn_madamlim', 'touch',
-   'confirmed', 2,
-   '234 Ang Mo Kio Ave 3', 'National Heart Centre', '5 Hospital Drive, Singapore 169609',
-   '2026-05-28T10:30:00+08:00', '2026-05-28T11:05:00+08:00',
-   'Mr. Singh', 'Hyundai Starex', 'SGV 7301B', 'Pavithra',
-   12, 32, 38, 1);
+   42, 18, 22, 0);
 
 -- Event log for the hero trip — stages 0, 1, 2 already happened.
 INSERT INTO trip_events (trip_id, stage, status, note, occurred_at) VALUES
@@ -85,11 +79,7 @@ INSERT INTO trip_events (trip_id, stage, status, note, occurred_at) VALUES
 
   ('trip_upcoming_2', 0, 'pending',   'Application sent to Blossom Seeds',     '2026-05-10T09:15:00+08:00'),
   ('trip_upcoming_2', 1, 'confirmed', 'Confirmed by provider',                  '2026-05-10T09:48:00+08:00'),
-  ('trip_upcoming_2', 2, 'confirmed', 'Driver Ms. Wong + escort Suriani assigned', '2026-05-10T10:02:00+08:00'),
-
-  ('trip_upcoming_3', 0, 'pending',   'Application sent to TOUCH Community Services', '2026-05-10T11:00:00+08:00'),
-  ('trip_upcoming_3', 1, 'confirmed', 'Confirmed by provider',                          '2026-05-10T11:31:00+08:00'),
-  ('trip_upcoming_3', 2, 'confirmed', 'Driver Mr. Singh + escort Pavithra assigned',    '2026-05-10T11:45:00+08:00');
+  ('trip_upcoming_2', 2, 'confirmed', 'Driver Ms. Wong + escort Suriani assigned', '2026-05-10T10:02:00+08:00');
 
 -- 3 past trips — populates the Trips list "Past" section.
 INSERT INTO trips (
