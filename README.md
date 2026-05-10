@@ -41,7 +41,7 @@ The 6 stages: Application sent → Confirmed by provider → Driver assigned →
 
 ## Pain points anchored in the pitch
 
-1. **Discovery gap** — many eligible seniors never apply for the AIC-coordinated MET subsidy. The signed-code flow lets a polyclinic / hospital MSW issue authorisation offline; the caregiver redeems it without an AIC round-trip.
+1. **Discovery gap** — many eligible seniors never apply for the AIC-coordinated MET subsidy. The signed-code flow lets the hospital Medical Social Worker (MSW) — the same role that certifies need today via the paper referral pipeline — issue an Ed25519-signed authorisation offline, redeemable in seconds rather than weeks. Polyclinic doctors and AIC Link officers can also issue under AIC's delegated authority.
 2. **Caregiver visibility gap** — phone-tag with provider replaced by a live, delivery-style stage tracker.
 3. **Default-Grab habit** — cost-compare screen converts a $32–$38 ride into a ~$8–$14 subsidised one (after applying a code).
 

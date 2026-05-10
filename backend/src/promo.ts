@@ -55,7 +55,10 @@ export async function issueCode(req: IssueRequest): Promise<string> {
       .slice(0, 10);
   const payload: PromoPayload = {
     v: 1,
-    iss: req.iss ?? "AMK_POLY",
+    // Issuer is the Medical Social Worker (MSW) acting under AIC's
+    // delegated signing authority — the same role that certifies MET
+    // need today via the paper referral pipeline.
+    iss: req.iss ?? "MSW @ AMK Polyclinic",
     sub,
     tier: clampTier(req.tier),
     vf: today.toISOString().slice(0, 10),

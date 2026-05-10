@@ -371,7 +371,7 @@ function OnboardingPage() {
               </div>
               <h2 className="mt-5 text-[26px] font-bold text-ink">{t("ob.verdictTitle")}</h2>
               <p className="text-mute mt-1 max-w-[460px] mx-auto">
-                Your loved one looks eligible for a subsidised MET trip. To activate it, apply the signed code issued by your polyclinic, hospital MSW or social service agency.
+                Your loved one looks eligible for a subsidised MET trip. To activate it, apply the code issued by your hospital MSW, polyclinic, or AIC Link officer.
               </p>
             </div>
             <Card className="mt-6 p-5">
@@ -1801,7 +1801,7 @@ function PromoPage() {
     <div className="page-anim flex-1 phone-scroll overflow-y-auto">
       <SubHeader back="#/profile" title="Apply subsidy code" />
       <p className="px-5 -mt-1 text-mute text-sm">
-        Got a signed authorisation from a polyclinic, hospital MSW, or social service agency?
+        Got an AIC-delegated code issued by your hospital MSW, polyclinic, or AIC Link officer?
         Paste it here to apply your subsidy.
       </p>
 
