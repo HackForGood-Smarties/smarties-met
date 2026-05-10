@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth";
 import { eligibilityRoutes } from "./routes/eligibility";
 import { meRoutes } from "./routes/me";
+import { promoRoutes } from "./routes/promo";
 import { providerRoutes } from "./routes/providers";
 import { tripRoutes } from "./routes/trips";
 import type { Env } from "./types";
@@ -30,6 +31,9 @@ app.get("/", (c) =>
       "PATCH  /api/me/language           { language }",
       "POST   /api/eligibility/check     { citizenship, age, mobility, income }",
       "POST   /api/eligibility/seniors/:seniorId  { same }",
+      "GET    /api/promo/pubkey          (Ed25519 pubkey for offline verification)",
+      "POST   /api/promo/issue           { nric, tier, iss?, validUntil? } (demo issuer)",
+      "POST   /api/promo/redeem          { code, nric }",
       "GET    /api/providers?postalCode=560234",
       "POST   /api/trips/quote           { seniorId, hospitalName?, pickupAt? }",
       "GET    /api/trips",
@@ -52,10 +56,12 @@ app.use("/api/me", attachCaregiver);
 app.use("/api/eligibility/seniors/*", attachCaregiver);
 app.use("/api/trips", attachCaregiver);
 app.use("/api/trips/*", attachCaregiver);
+app.use("/api/promo/redeem", attachCaregiver);
 
 app.route("/api/auth", authRoutes);
 app.route("/api/me", meRoutes);
 app.route("/api/eligibility", eligibilityRoutes);
+app.route("/api/promo", promoRoutes);
 app.route("/api/providers", providerRoutes);
 app.route("/api/trips", tripRoutes);
 

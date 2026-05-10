@@ -7,6 +7,7 @@
 --   4 Senior boarded
 --   5 Arrived at hospital
 
+DROP TABLE IF EXISTS redeemed_codes;
 DROP TABLE IF EXISTS trip_events;
 DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS providers;
@@ -34,6 +35,9 @@ CREATE TABLE seniors (
   postal_code     TEXT,
   citizenship     TEXT,                          -- sg | pr | none
   income_band     TEXT,                          -- inc1 | inc2 | inc3 | inc4
+  -- sha256(NRIC).slice(0,32) — used for binding signed AIC subsidy codes
+  -- to a specific senior. We never store raw NRIC.
+  nric_hash       TEXT,
   -- Cached eligibility verdict (re-computed when answers change).
   subsidy_pct     INTEGER,
   copay_low       INTEGER,
@@ -83,6 +87,17 @@ CREATE TABLE trips (
 CREATE INDEX idx_trips_caregiver ON trips(caregiver_id);
 CREATE INDEX idx_trips_senior    ON trips(senior_id);
 CREATE INDEX idx_trips_status    ON trips(status);
+
+-- Redeemed AIC subsidy codes — replay protection. The jti from each
+-- successfully-redeemed signed payload is stored here so the same code
+-- can't be redeemed twice (even if a different caregiver tries).
+CREATE TABLE redeemed_codes (
+  jti                    TEXT PRIMARY KEY,
+  redeemed_at            TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  redeemed_by_caregiver  TEXT REFERENCES caregivers(id),
+  applied_to_senior      TEXT REFERENCES seniors(id),
+  tier                   INTEGER
+);
 
 CREATE TABLE trip_events (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,

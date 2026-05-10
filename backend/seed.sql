@@ -7,9 +7,13 @@ INSERT INTO caregivers (id, name, email, phone, language) VALUES
 
 -- 1 senior under his care: Madam Lim Soo Hoon, 78
 -- Pre-cached eligibility (75% / co-pay $10–$11) — answer set: sg, age 78, mobHelp, inc2
+-- Madam Lim's NRIC = "S1234567A". We never store the raw value; the column
+-- below is sha256(upper(nric)).slice(0,32). Used to verify that AIC-signed
+-- subsidy codes were issued for THIS senior.
 INSERT INTO seniors (
   id, caregiver_id, name, age, relation, mobility, conditions_json,
   home_address, postal_code, citizenship, income_band,
+  nric_hash,
   subsidy_pct, copay_low, copay_high, eligibility_at
 ) VALUES (
   'sn_madamlim', 'cg_weiming',
@@ -18,6 +22,7 @@ INSERT INTO seniors (
   '["Mild diabetes","Knee osteoarthritis"]',
   '234 Ang Mo Kio Ave 3', '560234',
   'sg', 'inc2',
+  '70f2b95bdb288b37de66ef0548f97f12',
   70, 12, 14, '2026-04-30T08:00:00Z'
 );
 
