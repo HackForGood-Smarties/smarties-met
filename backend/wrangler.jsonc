@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "smarties",
-      "database_id": "REPLACE_AFTER_wrangler_d1_create",
+      "database_id": "dfe4286d-eca6-41f1-af58-68dc1d3468b3",
       "migrations_dir": "migrations"
     }
   ],
@@ -31,7 +31,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_classes": ["TripRoom"]
+      "new_sqlite_classes": ["TripRoom"]
     }
   ],
 
@@ -39,7 +39,7 @@
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "REPLACE_AFTER_wrangler_kv_namespace_create"
+      "id": "bf5388038811404ba0e4a90c5d9d847b"
     }
   ],
 
