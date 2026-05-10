@@ -63,8 +63,11 @@ async function attachCaregiver(
   c: any,
   next: () => Promise<void>,
 ): Promise<Response | void> {
-  const id = c.req.header("X-Caregiver-Id");
-  if (!id) return c.json({ error: "missing X-Caregiver-Id header" }, 401);
+  // Browsers can't set custom headers on WebSocket handshakes, so the
+  // /trips/:id/live route also accepts ?caregiverId=...
+  const id = c.req.header("X-Caregiver-Id") ?? c.req.query("caregiverId");
+  if (!id)
+    return c.json({ error: "missing X-Caregiver-Id header or caregiverId query param" }, 401);
   c.set("caregiverId", id);
   await next();
 }

@@ -324,10 +324,17 @@ async function loadSenior(
 
 async function loadTrip(
   env: Env,
-  id: string,
+  idOrRef: string,
   caregiverId: string,
 ): Promise<Trip | NotFound> {
-  const row = await env.DB.prepare(`SELECT * FROM trips WHERE id = ?`).bind(id).first();
+  // Accept either the internal id (`trip_xxx`) or the human-visible reference
+  // (`MET-XXXXXX`) so the caregiver UI can navigate by what's printed on the
+  // confirmation card.
+  const row = await env.DB.prepare(
+    `SELECT * FROM trips WHERE id = ? OR reference = ? LIMIT 1`,
+  )
+    .bind(idOrRef, idOrRef)
+    .first();
   if (!row) return { error: "trip not found", status: 404 };
   const trip = rowToTrip(row as any);
   if (trip.caregiver_id !== caregiverId)
