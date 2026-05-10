@@ -1429,12 +1429,20 @@ function TripsListPage() {
           )}
           {past.map((tp) => (
             <a key={tp.id} href={`#/trip/${tp.reference}`} className="p-4 flex items-center gap-3 hover:bg-paper2/40">
-              <div className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${tp.status === "cancelled" ? "bg-paper2 text-danger" : "bg-paper2 text-mute"}`}>
+              <div className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${tp.status === "cancelled" ? "bg-paper2 text-danger" : "bg-greenSoft text-green"}`}>
                 <Icon name={tp.status === "cancelled" ? "alert" : "check"} size={18} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-ink font-semibold text-sm">{formatTripDate(tp.pickup_at)}</p>
                 <p className="text-mute text-xs mt-0.5 truncate">{tp.home_address ? tp.home_address.split(",")[0] : "Home"} → {tp.hospital_name}</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {tp.status === "cancelled" ? (
+                    <Pill tone="neutral" className="!bg-danger/10 !text-danger">{t("tl.cancelled")}</Pill>
+                  ) : (
+                    <Pill tone="green"><Icon name="check" size={11} /> {t("tl.completed")}</Pill>
+                  )}
+                  {tp.is_round_trip ? <Pill tone="navy">{t("tk.roundTrip")}</Pill> : <Pill tone="neutral">{t("tk.oneWay")}</Pill>}
+                </div>
               </div>
               <p className="text-ink font-bold">${tp.copay ?? "—"}</p>
             </a>

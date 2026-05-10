@@ -152,6 +152,8 @@ const TRANSLATIONS = {
       upcoming: "Upcoming",
       past: "Past",
       empty: "No trips yet.",
+      completed: "Completed",
+      cancelled: "Cancelled",
     },
 
     // profile
@@ -318,7 +320,7 @@ const TRANSLATIONS = {
       subsidyQa: "补贴",
       viewDetails: "查看详情",
     },
-    tl: { title: "您的行程", upcoming: "即将", past: "过去", empty: "暂无行程。" },
+    tl: { title: "您的行程", upcoming: "即将", past: "过去", empty: "暂无行程。", completed: "已完成", cancelled: "已取消" },
     pr: {
       title: "我的",
       caregiver: "照护者",
@@ -475,7 +477,7 @@ const TRANSLATIONS = {
       subsidyQa: "Subsidi",
       viewDetails: "Lihat butiran",
     },
-    tl: { title: "Perjalanan anda", upcoming: "Akan datang", past: "Lepas", empty: "Belum ada perjalanan." },
+    tl: { title: "Perjalanan anda", upcoming: "Akan datang", past: "Lepas", empty: "Belum ada perjalanan.", completed: "Selesai", cancelled: "Dibatalkan" },
     pr: {
       title: "Profil",
       caregiver: "Penjaga",
@@ -632,7 +634,7 @@ const TRANSLATIONS = {
       subsidyQa: "மானியம்",
       viewDetails: "விவரங்களைப் பார்",
     },
-    tl: { title: "உங்கள் பயணங்கள்", upcoming: "வரவிருக்கும்", past: "முந்தைய", empty: "இன்னும் பயணம் இல்லை." },
+    tl: { title: "உங்கள் பயணங்கள்", upcoming: "வரவிருக்கும்", past: "முந்தைய", empty: "இன்னும் பயணம் இல்லை.", completed: "முடிந்தது", cancelled: "ரத்து" },
     pr: {
       title: "சுயவிவரம்",
       caregiver: "பராமரிப்பாளர்",
