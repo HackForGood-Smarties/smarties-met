@@ -913,6 +913,16 @@ function TripTrackerPage({ tripId }) {
   // is unreachable.
   const { data: tripPayload } = useApi(`/api/trips/${encodeURIComponent(ref)}`, [ref]);
   const tripData = tripPayload && tripPayload.trip;
+
+  // Only the chronologically-soonest upcoming trip is treated as "live"
+  // for demo purposes. Every other future trip sits static at whatever
+  // backend stage it has (Confirmed by provider, typically).
+  const tripsApi = useApi("/api/trips");
+  const soonestRef =
+    tripsApi.data && tripsApi.data.upcoming && tripsApi.data.upcoming[0]
+      ? tripsApi.data.upcoming[0].reference
+      : null;
+  const isLiveTrip = !!tripData && !!soonestRef && tripData.reference === soonestRef;
   const isFinal =
     tripData && (tripData.status === "completed" || tripData.status === "cancelled");
   const tripStatusLabel = !tripData
@@ -947,33 +957,30 @@ function TripTrackerPage({ tripId }) {
   // Render the appropriate slice of stages: 6 for one-way, 9 for round trip.
   const stages = trip.isRoundTrip ? allStages : allStages.slice(0, 6);
 
-  const [active, setActive] = useStateP(2); // driver assigned
+  const [active, setActive] = useStateP(0);
   const [notify, setNotify] = useStateP(true);
   const [cancelled, setCancelled] = useStateP(false);
-  const [conn, setConn] = useStateP("connecting"); // connecting | live | offline
+  const [conn, setConn] = useStateP("connecting"); // connecting | live | offline | done
 
-  // Live stage feed: subscribe to /api/trips/:ref/live. Skipped entirely
-  // for completed/cancelled trips (they're not progressing). If the
-  // connection can't be established (backend offline / blocked), we fall
-  // back to the 6-second auto-advance so the demo still progresses.
+  // Snap the stepper to the backend stage on initial load. Subsequent
+  // local auto-advances (below) are then only allowed forward.
+  useEffectP(() => {
+    if (typeof tripData?.stage === "number") {
+      setActive((cur) => Math.max(cur, Math.min(tripData.stage, stages.length - 1)));
+    }
+  }, [tripData && tripData.stage, stages.length]);
+
+  // Live stage feed via WebSocket. We only ever bump active forward
+  // (Math.max), so a quick re-broadcast can't yank the stepper
+  // backwards mid-demo.
   useEffectP(() => {
     if (isFinal) {
-      // Snap stepper to its final state and don't subscribe.
       setActive(tripData.stage ?? stages.length - 1);
       setConn("done");
       return;
     }
     let socket = null;
-    let fallbackTimer = null;
     let cancelled = false;
-    const startFallback = () => {
-      if (fallbackTimer) return;
-      setConn("offline");
-      fallbackTimer = setInterval(
-        () => setActive((a) => Math.min(a + 1, stages.length - 1)),
-        6000,
-      );
-    };
     try {
       socket = new WebSocket(
         `${BACKEND_WS}/api/trips/${encodeURIComponent(ref)}/live?caregiverId=${CAREGIVER_ID}`,
@@ -986,21 +993,36 @@ function TripTrackerPage({ tripId }) {
         try {
           const msg = JSON.parse(ev.data);
           if (msg && msg.state && typeof msg.state.stage === "number") {
-            setActive(Math.min(msg.state.stage, stages.length - 1));
+            const incoming = Math.min(msg.state.stage, stages.length - 1);
+            setActive((cur) => Math.max(cur, incoming));
           }
         } catch {}
       };
-      socket.onerror = startFallback;
-      socket.onclose = startFallback;
+      socket.onerror = () => setConn("offline");
+      socket.onclose = () => setConn("offline");
     } catch {
-      startFallback();
+      setConn("offline");
     }
     return () => {
       cancelled = true;
-      if (fallbackTimer) clearInterval(fallbackTimer);
       if (socket && socket.readyState <= 1) socket.close();
     };
-  }, [ref, stages.length, isFinal, tripData && tripData.stage]);
+  }, [ref, stages.length, isFinal]);
+
+  // Demo progression: ONLY the soonest upcoming trip auto-progresses,
+  // and only once stage ≥ 2 (driver dispatched). Every other trip on
+  // the dashboard sits static at its backend stage. This keeps the
+  // demo focused: the trip you're "actually taking today" is the one
+  // moving on the map; everything booked later just shows "Confirmed
+  // by provider" and waits.
+  useEffectP(() => {
+    if (isFinal || !isLiveTrip) return;
+    if (active < 2 || active >= stages.length - 1) return;
+    const id = setTimeout(() => {
+      setActive((a) => Math.min(a + 1, stages.length - 1));
+    }, 6000);
+    return () => clearTimeout(id);
+  }, [active, stages.length, isFinal, isLiveTrip]);
 
   // Persist the notify preference. Optimistic UI; revert on failure.
   const onToggleNotify = async () => {
@@ -1183,16 +1205,21 @@ function hospitalInfo(name) {
   return key ? HOSPITAL_COORDS[key] : { coords: DEFAULT_HOSPITAL.coords, label: name.split(" ").slice(0, 2).join(" ") };
 }
 
-// Map of stage -> position along route.
-//   stage 2 (Driver assigned)   : depot
-//   stage 3 (En route to pickup): mostly to home
+// Map of stage -> position along the route.
+//   stage 2 (Driver assigned)   : at depot
+//   stage 3 (En route to pickup): most of the way from depot to home
 //   stage 4 (Senior boarded)    : at home, just departed
 //   stage 5 (Arrived at hospital): at hospital
+//   stage 6 (At appointment)    : still at hospital (driver waits)
+//   stage 7 (Heading home)      : midway hospital → home
+//   stage 8 (Home safe)         : back at home
 function driverTargetForStage(stage, hospitalCoords) {
   if (stage <= 2) return MAP_DEPOT;
   if (stage === 3) return lerpLatLng(MAP_DEPOT, MAP_HOME, 0.85);
   if (stage === 4) return MAP_HOME;
-  return hospitalCoords;
+  if (stage === 5 || stage === 6) return hospitalCoords;
+  if (stage === 7) return lerpLatLng(hospitalCoords, MAP_HOME, 0.5);
+  return MAP_HOME; // stage 8 — home safe
 }
 function lerpLatLng(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
@@ -1314,7 +1341,10 @@ function TripMap({ active, placeholderText, hospital }) {
     const startLatLng = driver.getLatLng();
     const start = [startLatLng.lat, startLatLng.lng];
     const startTime = performance.now();
-    const dur = 1800;
+    // Animation duration is ~80% of the auto-advance tick, so the
+    // vehicle is visibly in motion most of the time the stage is
+    // active — the journey looks alive rather than teleport-y.
+    const dur = 4800;
 
     if (animRef.current) cancelAnimationFrame(animRef.current);
     const tick = (now) => {
