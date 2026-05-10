@@ -152,12 +152,21 @@ tripRoutes.post("/", async (c) => {
     new Date(body.pickupAt).getTime() + 35 * 60_000,
   ).toISOString();
 
+  // Auto-approval: in production a provider operator confirms by phone and
+  // dispatches a driver the day before. For the demo we collapse those two
+  // steps so a freshly-booked trip shows up on the caregiver's dashboard as
+  // "Confirmed · Driver assigned" — otherwise everything sits in "Pending"
+  // and the homepage looks broken.
+  const drv = pickDriver();
+  const esc = pickEscort();
+
   await c.env.DB.prepare(
     `INSERT INTO trips
       (id, reference, caregiver_id, senior_id, provider_id, status, stage,
        home_address, hospital_name, hospital_address, pickup_at, arrives_at,
+       driver_name, driver_vehicle, driver_plate, escort_name,
        copay, grab_low, grab_high, notify_home_safe)
-     VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+     VALUES (?, ?, ?, ?, ?, 'confirmed', 2, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
   )
     .bind(
       id,
@@ -170,39 +179,68 @@ tripRoutes.post("/", async (c) => {
       body.hospitalAddress ?? null,
       body.pickupAt,
       arrivesAt,
+      drv.name,
+      drv.vehicle,
+      drv.plate,
+      esc,
       copay,
       body.grabLow ?? 32,
       body.grabHigh ?? 38,
     )
     .run();
 
-  await c.env.DB.prepare(
-    `INSERT INTO trip_events (trip_id, stage, status, note)
-     VALUES (?, 0, 'pending', ?)`,
-  )
-    .bind(id, `Application sent to ${provider.name}`)
-    .run();
+  // Log all three transitions so the trip-event timeline reads naturally.
+  await c.env.DB.batch([
+    c.env.DB
+      .prepare(`INSERT INTO trip_events (trip_id, stage, status, note) VALUES (?, 0, 'pending', ?)`)
+      .bind(id, `Application sent to ${provider.name}`),
+    c.env.DB
+      .prepare(`INSERT INTO trip_events (trip_id, stage, status, note) VALUES (?, 1, 'confirmed', ?)`)
+      .bind(id, `Confirmed by ${provider.name}`),
+    c.env.DB
+      .prepare(`INSERT INTO trip_events (trip_id, stage, status, note) VALUES (?, 2, 'confirmed', ?)`)
+      .bind(id, `Driver ${drv.name} + escort ${esc} assigned`),
+  ]);
 
-  // Hydrate the room so a websocket subscriber gets a snapshot immediately.
+  // Hydrate the room so a websocket subscriber gets the right snapshot.
   await callDo(c.env, id, "/hydrate", {
-    stage: 0,
-    status: "pending",
+    stage: 2,
+    status: "confirmed",
     arrivesAt,
+    driver: { name: drv.name, vehicle: drv.vehicle, plate: drv.plate },
+    escort: { name: esc },
   });
 
   return c.json(
     {
-      trip: { id, reference },
+      trip: { id, reference, status: "confirmed", stage: 2 },
       provider,
+      driver: { name: drv.name, vehicle: drv.vehicle, plate: drv.plate },
+      escort: { name: esc },
       whatNext: [
-        "Provider reviews your request",
-        "They confirm by phone",
-        "Driver and escort assigned the day before",
+        "Provider has confirmed your request",
+        "Driver and escort are assigned",
+        "We'll send you a reminder the night before pickup",
       ],
     },
     201,
   );
 });
+
+// Tiny pools so freshly-booked trips don't all show "Mr. Tan / Mei Ling".
+const DRIVER_POOL = [
+  { name: "Mr. Tan", vehicle: "Toyota Hiace", plate: "SGW 8421C" },
+  { name: "Mr. Singh", vehicle: "Hyundai Starex", plate: "SGV 7301B" },
+  { name: "Ms. Wong", vehicle: "Toyota Hiace", plate: "SGZ 5142A" },
+  { name: "Mr. Lim", vehicle: "Mercedes Vito", plate: "SLA 9088L" },
+];
+const ESCORT_POOL = ["Mei Ling", "Suriani", "Pavithra", "Ah Lan", "Siti"];
+function pickDriver() {
+  return DRIVER_POOL[Math.floor(Math.random() * DRIVER_POOL.length)]!;
+}
+function pickEscort() {
+  return ESCORT_POOL[Math.floor(Math.random() * ESCORT_POOL.length)]!;
+}
 
 // ───────────────────────── advance / cancel / notify ─────────────────────────
 
