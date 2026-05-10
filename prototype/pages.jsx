@@ -497,8 +497,26 @@ function TripNewPage() {
 
   const home = senior.home || trip.home || "234 Ang Mo Kio Ave 3";
 
-  // Auto-bump the return time forward if the user moves the pickup time
-  // past the current return time.
+  // When the pickup time moves, shift the return time by the same delta
+  // so the caregiver's chosen offset (e.g. 2h consultation) is preserved.
+  // Editing the return time directly doesn't trigger this.
+  const prevPickupRef = useRefP(pickupLocal);
+  useEffectP(() => {
+    const prevIso = localInputToIso(prevPickupRef.current);
+    const newIso = localInputToIso(pickupLocal);
+    if (prevIso && newIso && prevIso !== newIso) {
+      const delta = new Date(newIso).getTime() - new Date(prevIso).getTime();
+      const returnIso = localInputToIso(returnLocal);
+      if (returnIso) {
+        const shifted = new Date(new Date(returnIso).getTime() + delta).toISOString();
+        setReturnLocal(isoToLocalInput(shifted));
+      }
+    }
+    prevPickupRef.current = pickupLocal;
+  }, [pickupLocal]);
+
+  // Safety net: if return is somehow before/equal to pickup (e.g. a stale
+  // draft), bump it to pickup + 2h.
   useEffectP(() => {
     const pickupIso = localInputToIso(pickupLocal);
     const returnIso = localInputToIso(returnLocal);
@@ -509,7 +527,7 @@ function TripNewPage() {
         ),
       );
     }
-  }, [pickupLocal]);
+  }, [pickupLocal, returnLocal]);
 
   // Persist any change to the draft so the next screen sees the latest.
   useEffectP(() => {
