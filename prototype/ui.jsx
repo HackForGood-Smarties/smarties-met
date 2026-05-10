@@ -141,9 +141,9 @@ function TopBar({ onLangChange }) {
   return (
     <header className="sticky top-0 z-30 bg-paper/85 backdrop-blur border-b border-line">
       <div className="mx-auto max-w-[720px] h-14 px-4 flex items-center justify-between">
-        <a href="#/home" className="focus-ring flex items-center gap-2 rounded-lg" aria-label="Smarties home">
-          <span className="inline-flex h-8 w-8 rounded-lg bg-ink text-paper items-center justify-center font-extrabold tracking-tight">S</span>
-          <span className="font-bold text-ink text-[17px]">Smarties</span>
+        <a href="#/home" className="focus-ring flex items-center gap-2 rounded-lg" aria-label="CareHop home">
+          <span className="inline-flex h-8 w-8 rounded-lg bg-ink text-paper items-center justify-center font-extrabold tracking-tight">C</span>
+          <span className="font-bold text-ink text-[17px]">CareHop</span>
           <span className="hidden sm:inline text-mute text-xs ml-1">· {t("tag")}</span>
         </a>
         <div className="relative">
