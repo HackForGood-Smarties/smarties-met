@@ -36,9 +36,12 @@ promoRoutes.post("/issue", async (c) => {
 
 // Caregiver-facing redemption endpoint.
 //
-// Body: { code, nric }
-//   code — the SMRT.…  string
-//   nric — the senior's NRIC, used to verify the code is bound to them
+// Body: { code, nric? }
+//   code — the SMRT.… string
+//   nric — optional. If present, the senior's NRIC is verified against
+//          the code's `sub`. If absent, we fall back to the senior's
+//          stored nric_hash (set when their record was created via
+//          Singpass / MyInfo proxy access).
 //
 // On success: senior's subsidy_pct + copay_low/high are updated and the
 // jti is recorded so the code can't be redeemed twice.
@@ -49,18 +52,9 @@ promoRoutes.post("/redeem", async (c) => {
     seniorId?: string;
   };
   if (!body.code) return c.json({ error: "code required" }, 400);
-  if (!body.nric) return c.json({ error: "nric required" }, 400);
 
   const result = await verifyCode(body.code);
   if (!result.ok) return c.json({ ok: false, reason: result.reason }, 400);
-
-  const presentedHash = await hashNric(body.nric);
-  if (presentedHash !== result.payload.sub) {
-    return c.json(
-      { ok: false, reason: "This code is for a different NRIC" },
-      400,
-    );
-  }
 
   const caregiverId = c.get("caregiverId");
   // Default to the caregiver's only senior unless told otherwise.
@@ -75,7 +69,6 @@ promoRoutes.post("/redeem", async (c) => {
     seniorId = row.id;
   }
 
-  // Confirm the senior's stored NRIC matches the one the caregiver typed.
   const senior = await c.env.DB.prepare(
     "SELECT id, caregiver_id, nric_hash FROM seniors WHERE id = ?",
   )
@@ -84,7 +77,27 @@ promoRoutes.post("/redeem", async (c) => {
   if (!senior) return c.json({ ok: false, reason: "senior not found" }, 404);
   if (senior.caregiver_id !== caregiverId)
     return c.json({ ok: false, reason: "forbidden" }, 403);
-  if (senior.nric_hash && senior.nric_hash !== presentedHash) {
+
+  // Pick the canonical NRIC hash for verification: caregiver-provided wins
+  // (lets them override if the stored hash is wrong); otherwise use the
+  // senior's stored hash from MyInfo.
+  let presentedHash: string | null = null;
+  if (body.nric) presentedHash = await hashNric(body.nric);
+  else if (senior.nric_hash) presentedHash = senior.nric_hash;
+  if (!presentedHash) {
+    return c.json(
+      { ok: false, reason: "Senior's NRIC isn't on file. Please enter it manually." },
+      400,
+    );
+  }
+
+  if (presentedHash !== result.payload.sub) {
+    return c.json(
+      { ok: false, reason: "This code is for a different NRIC" },
+      400,
+    );
+  }
+  if (body.nric && senior.nric_hash && senior.nric_hash !== presentedHash) {
     return c.json(
       { ok: false, reason: "NRIC doesn't match the senior's record" },
       400,

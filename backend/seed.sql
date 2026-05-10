@@ -23,7 +23,8 @@ INSERT INTO seniors (
   '234 Ang Mo Kio Ave 3', '560234',
   'sg', 'inc2',
   '70f2b95bdb288b37de66ef0548f97f12',
-  70, 12, 14, '2026-04-30T08:00:00Z'
+  -- subsidy is unset until the caregiver redeems an AIC promo code on Profile.
+  NULL, NULL, NULL, NULL
 );
 
 -- 3 MET providers, matching the prototype tile colours.
@@ -47,28 +48,48 @@ INSERT INTO providers (id, name, initials, bg_color, fg_color, serves, serves_po
    'Specialised vehicles for palliative & home-bound seniors.',
    '+6562510770');
 
--- 1 upcoming trip — the demo hero. Currently at stage 2 (driver assigned)
--- so the tracker has data for the driver card and the next-trip card.
+-- Upcoming trips. The first one (MET-2A4F19) is the hero we demo on
+-- the tracker. The rest are filler so the home + trips list don't look
+-- empty, with varied days + slot times to feel like real scheduling.
 INSERT INTO trips (
   id, reference, caregiver_id, senior_id, provider_id, status, stage,
   home_address, hospital_name, hospital_address,
   pickup_at, arrives_at,
   driver_name, driver_vehicle, driver_plate, escort_name,
   copay, grab_low, grab_high, notify_home_safe
-) VALUES (
-  'trip_upcoming', 'MET-2A4F19', 'cg_weiming', 'sn_madamlim', 'touch',
-  'confirmed', 2,
-  '234 Ang Mo Kio Ave 3', 'Singapore General Hospital', 'Outram Rd, Singapore 169608',
-  '2026-05-15T09:00:00+08:00', '2026-05-15T09:35:00+08:00',
-  'Mr. Tan', 'Toyota Hiace', 'SGW 8421C', 'Mei Ling',
-  12, 32, 38, 1
-);
+) VALUES
+  ('trip_upcoming', 'MET-2A4F19', 'cg_weiming', 'sn_madamlim', 'touch',
+   'confirmed', 2,
+   '234 Ang Mo Kio Ave 3', 'Singapore General Hospital', 'Outram Rd, Singapore 169608',
+   '2026-05-15T09:00:00+08:00', '2026-05-15T09:35:00+08:00',
+   'Mr. Tan', 'Toyota Hiace', 'SGW 8421C', 'Mei Ling',
+   12, 32, 38, 1),
+  ('trip_upcoming_2', 'MET-77B0C2', 'cg_weiming', 'sn_madamlim', 'blossom',
+   'confirmed', 2,
+   '234 Ang Mo Kio Ave 3', 'AMK Polyclinic', '21 Ang Mo Kio Central 2, Singapore 569666',
+   '2026-05-21T14:30:00+08:00', '2026-05-21T14:50:00+08:00',
+   'Ms. Wong', 'Toyota Hiace', 'SGZ 5142A', 'Suriani',
+   8, 18, 22, 0),
+  ('trip_upcoming_3', 'MET-3D9E11', 'cg_weiming', 'sn_madamlim', 'touch',
+   'confirmed', 2,
+   '234 Ang Mo Kio Ave 3', 'National Heart Centre', '5 Hospital Drive, Singapore 169609',
+   '2026-05-28T10:30:00+08:00', '2026-05-28T11:05:00+08:00',
+   'Mr. Singh', 'Hyundai Starex', 'SGV 7301B', 'Pavithra',
+   12, 32, 38, 1);
 
--- Event log: stages 0, 1, 2 already happened.
+-- Event log for the hero trip — stages 0, 1, 2 already happened.
 INSERT INTO trip_events (trip_id, stage, status, note, occurred_at) VALUES
   ('trip_upcoming', 0, 'pending',   'Application sent to TOUCH Community Services', '2026-05-09T18:42:00+08:00'),
   ('trip_upcoming', 1, 'confirmed', 'Confirmed by provider',                          '2026-05-09T20:11:00+08:00'),
-  ('trip_upcoming', 2, 'confirmed', 'Driver Mr. Tan + escort Mei Ling assigned',      '2026-05-14T10:00:00+08:00');
+  ('trip_upcoming', 2, 'confirmed', 'Driver Mr. Tan + escort Mei Ling assigned',      '2026-05-14T10:00:00+08:00'),
+
+  ('trip_upcoming_2', 0, 'pending',   'Application sent to Blossom Seeds',     '2026-05-10T09:15:00+08:00'),
+  ('trip_upcoming_2', 1, 'confirmed', 'Confirmed by provider',                  '2026-05-10T09:48:00+08:00'),
+  ('trip_upcoming_2', 2, 'confirmed', 'Driver Ms. Wong + escort Suriani assigned', '2026-05-10T10:02:00+08:00'),
+
+  ('trip_upcoming_3', 0, 'pending',   'Application sent to TOUCH Community Services', '2026-05-10T11:00:00+08:00'),
+  ('trip_upcoming_3', 1, 'confirmed', 'Confirmed by provider',                          '2026-05-10T11:31:00+08:00'),
+  ('trip_upcoming_3', 2, 'confirmed', 'Driver Mr. Singh + escort Pavithra assigned',    '2026-05-10T11:45:00+08:00');
 
 -- 3 past trips — populates the Trips list "Past" section.
 INSERT INTO trips (

@@ -32,8 +32,15 @@ tripRoutes.post("/quote", async (c) => {
 
   const grabLow = 32;
   const grabHigh = 38;
-  const metLow = senior.copay_low ?? 12;
-  const metHigh = senior.copay_high ?? 14;
+  // No subsidy applied yet → MET shows the un-subsidised base fare so the
+  // cost-compare screen is honest. Once a promo code is redeemed,
+  // subsidy_pct + copay_* are populated and MET becomes the cheap option.
+  const hasSubsidy =
+    typeof senior.subsidy_pct === "number" &&
+    senior.copay_low != null &&
+    senior.copay_high != null;
+  const metLow = hasSubsidy ? senior.copay_low! : 40;
+  const metHigh = hasSubsidy ? senior.copay_high! : 45;
   const savePerTrip = Math.round((grabLow + grabHigh) / 2 - (metLow + metHigh) / 2);
 
   return c.json({
@@ -46,7 +53,8 @@ tripRoutes.post("/quote", async (c) => {
       high: metHigh,
       original_low: 40,
       original_high: 45,
-      subsidy_pct: senior.subsidy_pct ?? null,
+      subsidy_pct: hasSubsidy ? senior.subsidy_pct : null,
+      has_subsidy: hasSubsidy,
     },
     savings: {
       perTrip: savePerTrip,
@@ -147,7 +155,18 @@ tripRoutes.post("/", async (c) => {
 
   const id = `trip_${crypto.randomUUID().slice(0, 8)}`;
   const reference = shortRef();
-  const copay = body.copay ?? Math.round(((senior.copay_low ?? 12) + (senior.copay_high ?? 14)) / 2);
+  // If the senior has no active subsidy, the booked trip is at full fare
+  // (~$42 round trip). After they redeem an AIC promo code, future trips
+  // pick up the subsidised co-pay.
+  const senior_has_subsidy =
+    typeof senior.subsidy_pct === "number" &&
+    senior.copay_low != null &&
+    senior.copay_high != null;
+  const copay =
+    body.copay ??
+    (senior_has_subsidy
+      ? Math.round((senior.copay_low! + senior.copay_high!) / 2)
+      : 42);
   const arrivesAt = new Date(
     new Date(body.pickupAt).getTime() + 35 * 60_000,
   ).toISOString();
