@@ -1486,7 +1486,6 @@ function SingpassLoginPage({ onLoggedIn }) {
         <div className="mt-12 rounded-2xl bg-white border border-line shadow-card overflow-hidden">
           <div className="px-5 py-4 flex items-center" style={{ background: "#F4333D" }}>
             <p className="text-white font-bold text-[19px] tracking-tight">singpass</p>
-            <span className="ml-auto text-white/80 text-[10px] font-semibold uppercase tracking-wider">Mock</span>
           </div>
 
           <div className="p-6 text-center">
@@ -1515,9 +1514,6 @@ function SingpassLoginPage({ onLoggedIn }) {
               )}
             </Btn>
 
-            <p className="text-mute text-[11px] mt-4">
-              Mock screen — no real Singpass authentication is performed.
-            </p>
           </div>
         </div>
 
