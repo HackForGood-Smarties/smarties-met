@@ -492,8 +492,8 @@ function TripNewPage() {
   const roundMetHigh = hasSubsidy ? seniorFromApi.copay_high : 45;
   const metLow = roundTrip ? roundMetLow : Math.round(roundMetLow * 0.6);
   const metHigh = roundTrip ? roundMetHigh : Math.round(roundMetHigh * 0.6);
-  const grabLowDisplay = roundTrip ? 70 : 35;
-  const grabHighDisplay = roundTrip ? 80 : 40;
+  const grabLowDisplay = roundTrip ? 68 : 34;
+  const grabHighDisplay = roundTrip ? 120 : 60;
 
   const home = senior.home || trip.home || "234 Ang Mo Kio Ave 3";
 
@@ -738,6 +738,26 @@ function RouteRow({ icon, label, value, accent }) {
 
 function ProvidersPage() {
   const { t } = useI18n();
+  const meApi = useApi("/api/me");
+  const senior = meApi.data && meApi.data.seniors && meApi.data.seniors[0];
+  const hasSubsidy =
+    senior && typeof senior.subsidy_pct === "number" &&
+    senior.copay_low != null && senior.copay_high != null;
+
+  // Read the round-trip toggle from the booking draft so the price
+  // shown here matches what the cost-compare card just showed.
+  const draft = useMemoP(() => loadDraft(), []);
+  const roundTrip = draft.roundTrip !== false;
+
+  // Per-trip-type baseline. Round-trip uses senior's actual subsidy
+  // band (or $40-45 if none); one-way is 60% of that.
+  const baseLow = hasSubsidy ? senior.copay_low : 40;
+  const baseHigh = hasSubsidy ? senior.copay_high : 45;
+  const dispLow = roundTrip ? baseLow : Math.round(baseLow * 0.6);
+  const dispHigh = roundTrip ? baseHigh : Math.round(baseHigh * 0.6);
+  const copayDisplay =
+    dispLow === dispHigh ? `$${dispLow}` : `$${dispLow}–$${dispHigh}`;
+
   return (
     <div className="page-anim flex-1 phone-scroll overflow-y-auto">
       <SubHeader back="#/trip/new" title={t("pv.title")} />
@@ -758,7 +778,7 @@ function ProvidersPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-mute text-[11px] font-semibold uppercase tracking-wide">{t("pv.coPay")}</p>
-                <p className="text-ink font-bold text-xl">{p.coPay}</p>
+                <p className="text-ink font-bold text-xl">{copayDisplay}</p>
               </div>
               <div>
                 <p className="text-mute text-[11px] font-semibold uppercase tracking-wide">{t("pv.response")}</p>

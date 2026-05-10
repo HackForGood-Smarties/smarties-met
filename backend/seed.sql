@@ -65,7 +65,7 @@ INSERT INTO trips (
    '2026-05-15T09:00:00+08:00', '2026-05-15T09:35:00+08:00',
    1, '2026-05-15T11:00:00+08:00', '2026-05-15T11:35:00+08:00',
    NULL, NULL, NULL, NULL,
-   42, 70, 80, 1),
+   42, 68, 120, 1),
   ('trip_upcoming_2', 'MET-77B0C2', 'cg_weiming', 'sn_madamlim', 'blossom',
    'confirmed', 1,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic', '21 Ang Mo Kio Central 2, Singapore 569666',
@@ -94,7 +94,7 @@ INSERT INTO trips (
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital',
    '2026-04-17T08:30:00+08:00', '2026-04-17T09:10:00+08:00',
    1, '2026-04-17T11:00:00+08:00', '2026-04-17T11:35:00+08:00',
-   12, 70, 80),
+   12, 68, 120),
   ('trip_past_2', 'MET-12FA3C', 'cg_weiming', 'sn_madamlim', 'blossom','completed', 8,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic',
    '2026-03-20T09:00:00+08:00', '2026-03-20T09:15:00+08:00',
@@ -104,4 +104,4 @@ INSERT INTO trips (
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital',
    '2026-02-04T08:30:00+08:00', '2026-02-04T09:05:00+08:00',
    1, '2026-02-04T11:00:00+08:00', '2026-02-04T11:35:00+08:00',
-   12, 70, 80);
+   12, 68, 120);

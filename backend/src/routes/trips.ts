@@ -39,11 +39,11 @@ tripRoutes.post("/quote", async (c) => {
     senior.copay_low != null &&
     senior.copay_high != null;
 
-  // Baseline numbers are quoted as round trip ($70-80 Grab, $40-45 MET
-  // unsubsidised). One-way is roughly half. MET providers that do support
-  // one-way usually charge ~60% of round-trip due to deadhead; we
-  // approximate at half + 10% premium.
-  const grabRoundLow = 70, grabRoundHigh = 80;
+  // Baseline numbers are quoted as round trip ($68-120 Grab, $40-45 MET
+  // unsubsidised). One-way is half the Grab band. MET providers that do
+  // support one-way usually charge ~60% of round-trip due to deadhead;
+  // we approximate at half + 10% premium.
+  const grabRoundLow = 68, grabRoundHigh = 120;
   const metBaseLow = hasSubsidy ? senior.copay_low! : 40;
   const metBaseHigh = hasSubsidy ? senior.copay_high! : 45;
 
@@ -182,8 +182,8 @@ tripRoutes.post("/", async (c) => {
     : 42;
   const copay = body.copay ?? (isRoundTrip ? baseCopay : Math.round(baseCopay * 0.6));
 
-  const grabLow = body.grabLow ?? (isRoundTrip ? 70 : 35);
-  const grabHigh = body.grabHigh ?? (isRoundTrip ? 80 : 40);
+  const grabLow = body.grabLow ?? (isRoundTrip ? 68 : 34);
+  const grabHigh = body.grabHigh ?? (isRoundTrip ? 120 : 60);
 
   const arrivesAt = new Date(
     new Date(body.pickupAt).getTime() + 35 * 60_000,
