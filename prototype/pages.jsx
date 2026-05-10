@@ -24,21 +24,18 @@ async function apiFetch(path, init) {
 }
 
 // ───────── auth (mock Singpass) ─────────
-// Bumping the version invalidates any session left over from a previous
-// build, so reviewers always see the splash login.
-const SESSION_KEY = "smarties.session.v2";
+// Session is held only in memory for the demo: every fresh page load
+// destroys the JS context, so reviewers always start at the Singpass
+// splash. (Real auth would persist across reloads, of course.)
+let _SMARTIES_SESSION = null;
 function loadSession() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-  } catch {
-    return null;
-  }
+  return _SMARTIES_SESSION;
 }
 function saveSession(s) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  _SMARTIES_SESSION = s;
 }
 function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
+  _SMARTIES_SESSION = null;
 }
 // Singapore-style NRIC masking: first letter + 4 X's + last 4 chars.
 // "S1234567A" → "Sxxxx567A"
@@ -1355,6 +1352,16 @@ function ProfilePage() {
                 </div>
                 <Pill tone="green"><Icon name="check" size={12} /> Verified</Pill>
               </div>
+              <button
+                className="focus-ring mt-3 text-mute hover:text-danger text-[11px] font-semibold underline underline-offset-2"
+                onClick={async () => {
+                  if (!window.confirm("Reset subsidy back to none? (demo only)")) return;
+                  await apiFetch("/api/demo/reset-subsidy", { method: "POST" }).catch(() => {});
+                  window.location.reload();
+                }}
+              >
+                Reset subsidy (demo)
+              </button>
             </>
           )}
         </Card>

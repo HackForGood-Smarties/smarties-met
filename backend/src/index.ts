@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth";
+import { demoRoutes } from "./routes/demo";
 import { eligibilityRoutes } from "./routes/eligibility";
 import { meRoutes } from "./routes/me";
 import { promoRoutes } from "./routes/promo";
@@ -34,6 +35,7 @@ app.get("/", (c) =>
       "GET    /api/promo/pubkey          (Ed25519 pubkey for offline verification)",
       "POST   /api/promo/issue           { nric, tier, iss?, validUntil? } (demo issuer)",
       "POST   /api/promo/redeem          { code, nric }",
+      "POST   /api/demo/reset-subsidy    (clears subsidy for the caregiver's senior)",
       "GET    /api/providers?postalCode=560234",
       "POST   /api/trips/quote           { seniorId, hospitalName?, pickupAt? }",
       "GET    /api/trips",
@@ -57,6 +59,7 @@ app.use("/api/eligibility/seniors/*", attachCaregiver);
 app.use("/api/trips", attachCaregiver);
 app.use("/api/trips/*", attachCaregiver);
 app.use("/api/promo/redeem", attachCaregiver);
+app.use("/api/demo/*", attachCaregiver);
 
 app.route("/api/auth", authRoutes);
 app.route("/api/me", meRoutes);
@@ -64,6 +67,7 @@ app.route("/api/eligibility", eligibilityRoutes);
 app.route("/api/promo", promoRoutes);
 app.route("/api/providers", providerRoutes);
 app.route("/api/trips", tripRoutes);
+app.route("/api/demo", demoRoutes);
 
 async function attachCaregiver(
   c: any,

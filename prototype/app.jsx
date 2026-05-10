@@ -16,15 +16,10 @@ function useHashRoute() {
 }
 
 function App() {
-  // Singpass-mock session gate. If absent, render the splash login page
-  // instead of the app shell. Logging in writes to localStorage and
-  // re-renders.
+  // Singpass-mock session gate. Session is held in memory only (see
+  // pages.jsx loadSession), so every fresh page load shows the splash —
+  // desired behaviour for the demo.
   const [hasSession, setHasSession] = useStateA(() => !!loadSession());
-  useEffectA(() => {
-    const onStorage = () => setHasSession(!!loadSession());
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
 
   // IMPORTANT: hooks must run in the same order on every render. Call
   // useHashRoute unconditionally even if we're going to render the

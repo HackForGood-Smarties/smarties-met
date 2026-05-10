@@ -104,46 +104,28 @@ promoRoutes.post("/redeem", async (c) => {
     );
   }
 
-  // Replay protection — jti must be unused.
-  const seen = await c.env.DB.prepare(
-    "SELECT jti FROM redeemed_codes WHERE jti = ?",
-  )
-    .bind(result.payload.jti)
-    .first();
-  if (seen) {
-    return c.json(
-      { ok: false, reason: "This code has already been redeemed" },
-      409,
-    );
-  }
-
+  // No one-time-use enforcement: the code is bound to the senior's NRIC by
+  // signed payload, so re-applying the same code (e.g. after a re-install
+  // or on a different device) just re-asserts the same subsidy.
   const tier = result.payload.tier;
   const copay_low = Math.round(40 * (1 - tier / 100));
   const copay_high = Math.round(45 * (1 - tier / 100));
 
-  await c.env.DB.batch([
-    c.env.DB
-      .prepare(
-        `UPDATE seniors
-            SET subsidy_pct = ?, copay_low = ?, copay_high = ?,
-                eligibility_at = ?, nric_hash = COALESCE(nric_hash, ?)
-          WHERE id = ?`,
-      )
-      .bind(
-        tier,
-        copay_low,
-        copay_high,
-        new Date().toISOString(),
-        presentedHash,
-        seniorId,
-      ),
-    c.env.DB
-      .prepare(
-        `INSERT INTO redeemed_codes (jti, applied_to_senior, tier, redeemed_by_caregiver)
-         VALUES (?, ?, ?, ?)`,
-      )
-      .bind(result.payload.jti, seniorId, tier, caregiverId),
-  ]);
+  await c.env.DB.prepare(
+    `UPDATE seniors
+        SET subsidy_pct = ?, copay_low = ?, copay_high = ?,
+            eligibility_at = ?, nric_hash = COALESCE(nric_hash, ?)
+      WHERE id = ?`,
+  )
+    .bind(
+      tier,
+      copay_low,
+      copay_high,
+      new Date().toISOString(),
+      presentedHash,
+      seniorId,
+    )
+    .run();
 
   return c.json({
     ok: true,
