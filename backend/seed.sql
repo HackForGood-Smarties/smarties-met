@@ -55,6 +55,7 @@ INSERT INTO trips (
   id, reference, caregiver_id, senior_id, provider_id, status, stage,
   home_address, hospital_name, hospital_address,
   pickup_at, arrives_at,
+  is_round_trip, return_pickup_at, return_arrives_at,
   driver_name, driver_vehicle, driver_plate, escort_name,
   copay, grab_low, grab_high, notify_home_safe
 ) VALUES
@@ -62,12 +63,14 @@ INSERT INTO trips (
    'confirmed', 1,
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital', 'Outram Rd, Singapore 169608',
    '2026-05-15T09:00:00+08:00', '2026-05-15T09:35:00+08:00',
+   1, '2026-05-15T11:00:00+08:00', '2026-05-15T11:35:00+08:00',
    NULL, NULL, NULL, NULL,
    42, 70, 80, 1),
   ('trip_upcoming_2', 'MET-77B0C2', 'cg_weiming', 'sn_madamlim', 'blossom',
    'confirmed', 1,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic', '21 Ang Mo Kio Central 2, Singapore 569666',
    '2026-05-21T14:30:00+08:00', '2026-05-21T14:50:00+08:00',
+   1, '2026-05-21T15:30:00+08:00', '2026-05-21T15:50:00+08:00',
    NULL, NULL, NULL, NULL,
    42, 50, 60, 0);
 
@@ -83,14 +86,22 @@ INSERT INTO trip_events (trip_id, stage, status, note, occurred_at) VALUES
 -- 3 past trips — populates the Trips list "Past" section.
 INSERT INTO trips (
   id, reference, caregiver_id, senior_id, provider_id, status, stage,
-  home_address, hospital_name, pickup_at, arrives_at, copay, grab_low, grab_high
+  home_address, hospital_name, pickup_at, arrives_at,
+  is_round_trip, return_pickup_at, return_arrives_at,
+  copay, grab_low, grab_high
 ) VALUES
-  ('trip_past_1', 'MET-19BCDE', 'cg_weiming', 'sn_madamlim', 'touch',  'completed', 5,
+  ('trip_past_1', 'MET-19BCDE', 'cg_weiming', 'sn_madamlim', 'touch',  'completed', 8,
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital',
-   '2026-04-17T08:30:00+08:00', '2026-04-17T09:10:00+08:00', 12, 70, 80),
-  ('trip_past_2', 'MET-12FA3C', 'cg_weiming', 'sn_madamlim', 'blossom','completed', 5,
+   '2026-04-17T08:30:00+08:00', '2026-04-17T09:10:00+08:00',
+   1, '2026-04-17T11:00:00+08:00', '2026-04-17T11:35:00+08:00',
+   12, 70, 80),
+  ('trip_past_2', 'MET-12FA3C', 'cg_weiming', 'sn_madamlim', 'blossom','completed', 8,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic',
-   '2026-03-20T09:00:00+08:00', '2026-03-20T09:15:00+08:00', 8,  50, 60),
-  ('trip_past_3', 'MET-0AA771', 'cg_weiming', 'sn_madamlim', 'touch',  'completed', 5,
+   '2026-03-20T09:00:00+08:00', '2026-03-20T09:15:00+08:00',
+   1, '2026-03-20T10:30:00+08:00', '2026-03-20T10:45:00+08:00',
+   8, 50, 60),
+  ('trip_past_3', 'MET-0AA771', 'cg_weiming', 'sn_madamlim', 'touch',  'completed', 8,
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital',
-   '2026-02-04T08:30:00+08:00', '2026-02-04T09:05:00+08:00', 12, 70, 80);
+   '2026-02-04T08:30:00+08:00', '2026-02-04T09:05:00+08:00',
+   1, '2026-02-04T11:00:00+08:00', '2026-02-04T11:35:00+08:00',
+   12, 70, 80);

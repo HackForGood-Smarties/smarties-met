@@ -24,9 +24,14 @@ export const STAGES = [
   "En route to pickup",
   "Senior boarded",
   "Arrived at hospital",
+  // Round-trip continuation:
+  "At appointment",
+  "Heading home",
+  "Home safe",
 ] as const;
 
-export type StageIndex = 0 | 1 | 2 | 3 | 4 | 5;
+export const ONE_WAY_FINAL_STAGE = 5;
+export type StageIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export interface Caregiver {
   id: string;
@@ -82,6 +87,9 @@ export interface Trip {
   hospital_address: string | null;
   pickup_at: string;
   arrives_at: string | null;
+  is_round_trip: 0 | 1;
+  return_pickup_at: string | null;
+  return_arrives_at: string | null;
   driver_name: string | null;
   driver_vehicle: string | null;
   driver_plate: string | null;

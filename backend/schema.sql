@@ -6,6 +6,10 @@
 --   3 En route to pickup
 --   4 Senior boarded
 --   5 Arrived at hospital
+-- (round-trip only)
+--   6 At appointment
+--   7 Heading home
+--   8 Home safe
 
 DROP TABLE IF EXISTS redeemed_codes;
 DROP TABLE IF EXISTS trip_events;
@@ -74,6 +78,9 @@ CREATE TABLE trips (
   hospital_address  TEXT,
   pickup_at         TEXT NOT NULL,               -- ISO 8601
   arrives_at        TEXT,
+  is_round_trip     INTEGER NOT NULL DEFAULT 1,  -- 0 = one-way, 1 = round trip
+  return_pickup_at  TEXT,                        -- when driver returns to hospital to fetch senior
+  return_arrives_at TEXT,                        -- ETA back home
   driver_name       TEXT,
   driver_vehicle    TEXT,
   driver_plate      TEXT,

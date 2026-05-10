@@ -49,8 +49,12 @@ export function rowToProvider(row: ProviderRow): Provider {
   return { ...row, serves_postcodes: safeJsonArray(row.serves_postcodes) };
 }
 
-export function rowToTrip(row: Trip & { notify_home_safe: number }): Trip {
-  return { ...row, notify_home_safe: (row.notify_home_safe ? 1 : 0) as 0 | 1 };
+export function rowToTrip(row: Trip & { notify_home_safe: number; is_round_trip: number }): Trip {
+  return {
+    ...row,
+    notify_home_safe: (row.notify_home_safe ? 1 : 0) as 0 | 1,
+    is_round_trip: (row.is_round_trip ? 1 : 0) as 0 | 1,
+  };
 }
 
 export type CaregiverRow = Caregiver;

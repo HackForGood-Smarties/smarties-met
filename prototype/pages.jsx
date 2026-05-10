@@ -173,10 +173,11 @@ function HomePage() {
                 <Icon name="calendar" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-ink font-semibold">{formatTripDate(next.pickup_at)} · {formatTripTime(next.pickup_at)}</p>
+                <p className="text-ink font-semibold">{formatTripDate(next.pickup_at)} · {formatTripTime(next.pickup_at)}{next.is_round_trip && next.return_pickup_at ? ` → ${formatTripTime(next.return_pickup_at)}` : ""}</p>
                 <p className="text-mute text-sm mt-0.5 truncate">{next.home_address} → {next.hospital_name}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <Pill tone={next.status === "confirmed" ? "green" : "gold"}><Icon name="check" size={12} /> {next.status === "confirmed" ? "Confirmed" : "Pending"}</Pill>
+                  {next.is_round_trip ? <Pill tone="navy">{t("tk.roundTrip")}</Pill> : <Pill tone="neutral">{t("tk.oneWay")}</Pill>}
                   {typeof next.copay === "number" && <Pill tone="gold">${next.copay} co-pay</Pill>}
                 </div>
               </div>
@@ -460,8 +461,6 @@ function TripNewPage() {
   const seniorFromApi = meApi.data && meApi.data.seniors && meApi.data.seniors[0];
   const hasSubsidy =
     seniorFromApi && typeof seniorFromApi.subsidy_pct === "number";
-  const metLow = hasSubsidy ? seniorFromApi.copay_low : 40;
-  const metHigh = hasSubsidy ? seniorFromApi.copay_high : 45;
   const initialDraft = useMemoP(() => loadDraft(), []);
 
   const [hospital, setHospital] = useStateP(
@@ -475,8 +474,42 @@ function TripNewPage() {
       ? isoToLocalInput(initialDraft.pickupAt)
       : isoToLocalInput(defaultPickup()),
   );
+  // Default to round-trip — almost every senior medical journey needs a
+  // return ride, and MET providers price per round trip anyway.
+  const [roundTrip, setRoundTrip] = useStateP(
+    initialDraft.roundTrip !== false,
+  );
+  const [returnLocal, setReturnLocal] = useStateP(() => {
+    if (initialDraft.returnAt) return isoToLocalInput(initialDraft.returnAt);
+    const base = initialDraft.pickupAt || defaultPickup();
+    return isoToLocalInput(
+      new Date(new Date(base).getTime() + 2 * 60 * 60_000).toISOString(),
+    );
+  });
+
+  // Round-trip prices (round-trip is the default, halve for one-way).
+  const roundMetLow = hasSubsidy ? seniorFromApi.copay_low : 40;
+  const roundMetHigh = hasSubsidy ? seniorFromApi.copay_high : 45;
+  const metLow = roundTrip ? roundMetLow : Math.round(roundMetLow * 0.6);
+  const metHigh = roundTrip ? roundMetHigh : Math.round(roundMetHigh * 0.6);
+  const grabLowDisplay = roundTrip ? 70 : 35;
+  const grabHighDisplay = roundTrip ? 80 : 40;
 
   const home = senior.home || trip.home || "234 Ang Mo Kio Ave 3";
+
+  // Auto-bump the return time forward if the user moves the pickup time
+  // past the current return time.
+  useEffectP(() => {
+    const pickupIso = localInputToIso(pickupLocal);
+    const returnIso = localInputToIso(returnLocal);
+    if (pickupIso && returnIso && new Date(returnIso) <= new Date(pickupIso)) {
+      setReturnLocal(
+        isoToLocalInput(
+          new Date(new Date(pickupIso).getTime() + 2 * 60 * 60_000).toISOString(),
+        ),
+      );
+    }
+  }, [pickupLocal]);
 
   // Persist any change to the draft so the next screen sees the latest.
   useEffectP(() => {
@@ -485,8 +518,10 @@ function TripNewPage() {
       hospitalName: hospital,
       hospitalAddress,
       pickupAt: localInputToIso(pickupLocal),
+      roundTrip,
+      returnAt: roundTrip ? localInputToIso(returnLocal) : null,
     });
-  }, [hospital, hospitalAddress, pickupLocal]);
+  }, [hospital, hospitalAddress, pickupLocal, roundTrip, returnLocal]);
 
   const onPickHospital = (h) => {
     setHospital(h.name);
@@ -557,6 +592,49 @@ function TripNewPage() {
                 )}
               </div>
             </div>
+
+            <Divider className="my-1" />
+
+            {/* Round-trip toggle + return time */}
+            <div className="flex items-start gap-3">
+              <span className="h-9 w-9 rounded-lg bg-paper2 text-ink inline-flex items-center justify-center shrink-0">
+                <Icon name="van" size={18} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-mute text-xs font-semibold uppercase tracking-wide">Trip type</p>
+                  <button
+                    role="switch"
+                    aria-checked={roundTrip}
+                    onClick={() => setRoundTrip((r) => !r)}
+                    className={`focus-ring shrink-0 h-7 w-12 rounded-full transition relative ${roundTrip ? "bg-green" : "bg-line"}`}
+                  >
+                    <span className={`absolute top-1 ${roundTrip ? "right-1" : "left-1"} h-5 w-5 rounded-full bg-white shadow transition-all`} />
+                  </button>
+                </div>
+                <p className="text-ink font-semibold text-[15px] mt-1">
+                  {roundTrip ? t("tk.roundTrip") : t("tk.oneWay")}
+                </p>
+                {roundTrip && (
+                  <div className="mt-2">
+                    <label className="text-mute text-[11px] font-semibold uppercase tracking-wide">
+                      {t("tk.returnTime")}
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={returnLocal}
+                      onChange={(e) => setReturnLocal(e.target.value)}
+                      className="focus-ring mt-1 w-full bg-paper2/60 border border-line rounded-lg px-3 py-2 text-ink font-semibold text-[15px] tabular-nums"
+                    />
+                    {returnLocal && (
+                      <p className="text-mute text-xs mt-1">
+                        {formatTripTime(localInputToIso(returnLocal))} · {t("tk.returnHomeBy")} ~{formatTripTime(new Date(new Date(localInputToIso(returnLocal)).getTime() + 35 * 60_000).toISOString())}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </Card>
       </div>
@@ -571,7 +649,7 @@ function TripNewPage() {
               <p className="text-mute font-semibold text-sm">{t("tn.grabHead")}</p>
               <Icon name="car" size={18} className="text-mute" />
             </div>
-            <p className="mt-4 text-mute text-[28px] font-bold leading-none">{t("tn.grabPrice")}</p>
+            <p className="mt-4 text-mute text-[28px] font-bold leading-none">≈ ${grabLowDisplay}–${grabHighDisplay}</p>
             <ul className="mt-4 space-y-1.5 text-mute text-[13px] leading-snug flex-1">
               {t("tn.grabBullets").map((b, i) => (
                 <li key={i} className="flex gap-1.5"><span className="text-mute">•</span><span>{b}</span></li>
@@ -591,7 +669,7 @@ function TripNewPage() {
             </div>
             <div className="mt-3">
               {hasSubsidy && (
-                <p className="text-mute text-[15px] font-semibold line-through">${trip.metOriginal}</p>
+                <p className="text-mute text-[15px] font-semibold line-through">${roundTrip ? 40 : 24}</p>
               )}
               <p className="text-ink text-[64px] font-bold leading-none tracking-tight">
                 ${metLow}{metHigh !== metLow ? `–${metHigh}` : ""}
@@ -696,6 +774,8 @@ function ApplyPage({ providerId }) {
       hospitalName: draft.hospitalName || "Singapore General Hospital",
       hospitalAddress: draft.hospitalAddress || null,
       pickupAt: draft.pickupAt || defaultPickup(),
+      roundTrip: draft.roundTrip !== false,
+      returnAt: draft.returnAt || null,
     };
     apiFetch("/api/trips", { method: "POST", body: JSON.stringify(body) })
       .then((res) => {
@@ -807,7 +887,7 @@ function ApplyPage({ providerId }) {
 function TripTrackerPage({ tripId }) {
   const { t } = useI18n();
   const fallback = window.AppData.TRIP;
-  const stages = t("tk.stages");
+  const allStages = t("tk.stages");
   const ref = tripId || fallback.id;
 
   // Fetch the full trip from backend so the driver, escort, ETA, and route
@@ -833,6 +913,9 @@ function TripTrackerPage({ tripId }) {
         date: formatTripDate(tripData.pickup_at) || fallback.date,
         time: formatTripTime(tripData.pickup_at) || fallback.time,
         arr: formatTripTime(tripData.arrives_at) || fallback.arr,
+        isRoundTrip: tripData.is_round_trip === 1,
+        returnTime: formatTripTime(tripData.return_pickup_at),
+        returnArr: formatTripTime(tripData.return_arrives_at),
         driver: tripData.driver_name
           ? {
               name: tripData.driver_name,
@@ -843,6 +926,8 @@ function TripTrackerPage({ tripId }) {
         copay: typeof tripData.copay === "number" ? tripData.copay : fallback.metPrice,
       }
     : fallback;
+  // Render the appropriate slice of stages: 6 for one-way, 9 for round trip.
+  const stages = trip.isRoundTrip ? allStages : allStages.slice(0, 6);
 
   const [active, setActive] = useStateP(2); // driver assigned
   const [notify, setNotify] = useStateP(true);
@@ -955,6 +1040,18 @@ function TripTrackerPage({ tripId }) {
               )}
             </div>
           </div>
+          {trip.isRoundTrip && (
+            <div className="mt-4 pt-4 border-t border-paper/10 grid grid-cols-2 gap-4 text-[12px]">
+              <div>
+                <p className="text-paper/60 font-semibold uppercase tracking-wider">{t("tk.outbound")}</p>
+                <p className="text-paper font-semibold mt-0.5">{trip.time}</p>
+              </div>
+              <div>
+                <p className="text-paper/60 font-semibold uppercase tracking-wider">{t("tk.returnLeg")}</p>
+                <p className="text-paper font-semibold mt-0.5">{trip.returnTime || "—"}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1257,10 +1354,11 @@ function TripsListPage() {
               <div className="flex items-start gap-3">
                 <div className="h-11 w-11 rounded-xl bg-goldSoft text-ink inline-flex items-center justify-center"><Icon name="calendar" /></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-ink font-semibold">{formatTripDate(tp.pickup_at)} · {formatTripTime(tp.pickup_at)}</p>
+                  <p className="text-ink font-semibold">{formatTripDate(tp.pickup_at)} · {formatTripTime(tp.pickup_at)}{tp.is_round_trip && tp.return_pickup_at ? ` → ${formatTripTime(tp.return_pickup_at)}` : ""}</p>
                   <p className="text-mute text-sm mt-0.5 truncate">{tp.home_address} → {tp.hospital_name}</p>
                   <div className="mt-2 flex gap-1.5">
                     <Pill tone={tp.status === "confirmed" ? "green" : "gold"}>{tp.status === "confirmed" ? "Confirmed" : "Pending"}</Pill>
+                    {tp.is_round_trip ? <Pill tone="navy">{t("tk.roundTrip")}</Pill> : <Pill tone="neutral">{t("tk.oneWay")}</Pill>}
                     {typeof tp.copay === "number" && <Pill tone="gold">${tp.copay}</Pill>}
                   </div>
                 </div>

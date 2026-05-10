@@ -16,43 +16,55 @@ tripRoutes.get("/stages", (c) =>
 // ───────────────────────── quote (Grab vs MET) ─────────────────────────
 //
 // POST /api/trips/quote
-// Body: { seniorId: string, hospitalName: string, pickupAt: string }
-// Returns a Grab range, an MET range (subsidy applied if cached), and the
-// per-trip / yearly savings — the numbers driving the cost-compare screen.
+// Body: { seniorId, hospitalName?, pickupAt?, roundTrip? }
+// Returns Grab + MET prices for the requested trip type. Round-trip is
+// the default — most medical journeys need a return ride and MET
+// providers price per round-trip anyway.
 tripRoutes.post("/quote", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as {
     seniorId?: string;
     hospitalName?: string;
     pickupAt?: string;
+    roundTrip?: boolean;
   };
   if (!body.seniorId) return c.json({ error: "seniorId required" }, 400);
 
   const senior = await loadSenior(c.env, body.seniorId, c.get("caregiverId"));
   if ("error" in senior) return c.json({ error: senior.error }, senior.status);
 
-  const grabLow = 70;
-  const grabHigh = 80;
-  // No subsidy applied yet → MET shows the un-subsidised base fare so the
-  // cost-compare screen is honest. Once a promo code is redeemed,
-  // subsidy_pct + copay_* are populated and MET becomes the cheap option.
+  const isRoundTrip = body.roundTrip !== false; // default true
+
   const hasSubsidy =
     typeof senior.subsidy_pct === "number" &&
     senior.copay_low != null &&
     senior.copay_high != null;
-  const metLow = hasSubsidy ? senior.copay_low! : 40;
-  const metHigh = hasSubsidy ? senior.copay_high! : 45;
+
+  // Baseline numbers are quoted as round trip ($70-80 Grab, $40-45 MET
+  // unsubsidised). One-way is roughly half. MET providers that do support
+  // one-way usually charge ~60% of round-trip due to deadhead; we
+  // approximate at half + 10% premium.
+  const grabRoundLow = 70, grabRoundHigh = 80;
+  const metBaseLow = hasSubsidy ? senior.copay_low! : 40;
+  const metBaseHigh = hasSubsidy ? senior.copay_high! : 45;
+
+  const grabLow = isRoundTrip ? grabRoundLow : Math.round(grabRoundLow / 2);
+  const grabHigh = isRoundTrip ? grabRoundHigh : Math.round(grabRoundHigh / 2);
+  const metLow = isRoundTrip ? metBaseLow : Math.round(metBaseLow * 0.6);
+  const metHigh = isRoundTrip ? metBaseHigh : Math.round(metBaseHigh * 0.6);
+
   const savePerTrip = Math.round((grabLow + grabHigh) / 2 - (metLow + metHigh) / 2);
 
   return c.json({
     senior: { id: senior.id, name: senior.name },
     pickupAt: body.pickupAt ?? null,
     hospital: body.hospitalName ?? null,
+    roundTrip: isRoundTrip,
     grab: { low: grabLow, high: grabHigh },
     met: {
       low: metLow,
       high: metHigh,
-      original_low: 40,
-      original_high: 45,
+      original_low: isRoundTrip ? 40 : 24,
+      original_high: isRoundTrip ? 45 : 27,
       subsidy_pct: hasSubsidy ? senior.subsidy_pct : null,
       has_subsidy: hasSubsidy,
     },
@@ -137,6 +149,8 @@ tripRoutes.post("/", async (c) => {
     hospitalName?: string;
     hospitalAddress?: string;
     pickupAt?: string;
+    roundTrip?: boolean;
+    returnAt?: string; // ISO 8601, return pickup at hospital
     grabLow?: number;
     grabHigh?: number;
     copay?: number;
@@ -155,32 +169,42 @@ tripRoutes.post("/", async (c) => {
 
   const id = `trip_${crypto.randomUUID().slice(0, 8)}`;
   const reference = shortRef();
-  // If the senior has no active subsidy, the booked trip is at full fare
-  // (~$42 round trip). After they redeem an AIC promo code, future trips
-  // pick up the subsidised co-pay.
+  const isRoundTrip = body.roundTrip !== false; // default true
+
   const senior_has_subsidy =
     typeof senior.subsidy_pct === "number" &&
     senior.copay_low != null &&
     senior.copay_high != null;
-  const copay =
-    body.copay ??
-    (senior_has_subsidy
-      ? Math.round((senior.copay_low! + senior.copay_high!) / 2)
-      : 42);
+
+  // Co-pay is round-trip price by default. One-way is ~60% of round trip.
+  const baseCopay = senior_has_subsidy
+    ? Math.round((senior.copay_low! + senior.copay_high!) / 2)
+    : 42;
+  const copay = body.copay ?? (isRoundTrip ? baseCopay : Math.round(baseCopay * 0.6));
+
+  const grabLow = body.grabLow ?? (isRoundTrip ? 70 : 35);
+  const grabHigh = body.grabHigh ?? (isRoundTrip ? 80 : 40);
+
   const arrivesAt = new Date(
     new Date(body.pickupAt).getTime() + 35 * 60_000,
   ).toISOString();
 
-  // Auto-approval: provider confirms the booking right away. Driver is
-  // NOT assigned at booking time — that happens the day before pickup.
-  // Until then the trip stays at stage 1 (Confirmed by provider) on the
-  // caregiver's dashboard, with no live tracking.
+  // Default return = pickup + 2 hours (typical specialist appointment).
+  const returnPickupAt = isRoundTrip
+    ? body.returnAt ??
+      new Date(new Date(body.pickupAt).getTime() + 2 * 60 * 60_000).toISOString()
+    : null;
+  const returnArrivesAt = returnPickupAt
+    ? new Date(new Date(returnPickupAt).getTime() + 35 * 60_000).toISOString()
+    : null;
+
   await c.env.DB.prepare(
     `INSERT INTO trips
       (id, reference, caregiver_id, senior_id, provider_id, status, stage,
        home_address, hospital_name, hospital_address, pickup_at, arrives_at,
+       is_round_trip, return_pickup_at, return_arrives_at,
        copay, grab_low, grab_high, notify_home_safe)
-     VALUES (?, ?, ?, ?, ?, 'confirmed', 1, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+     VALUES (?, ?, ?, ?, ?, 'confirmed', 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
   )
     .bind(
       id,
@@ -193,9 +217,12 @@ tripRoutes.post("/", async (c) => {
       body.hospitalAddress ?? null,
       body.pickupAt,
       arrivesAt,
+      isRoundTrip ? 1 : 0,
+      returnPickupAt,
+      returnArrivesAt,
       copay,
-      body.grabLow ?? 70,
-      body.grabHigh ?? 80,
+      grabLow,
+      grabHigh,
     )
     .run();
 
@@ -218,12 +245,22 @@ tripRoutes.post("/", async (c) => {
 
   return c.json(
     {
-      trip: { id, reference, status: "confirmed", stage: 1 },
+      trip: {
+        id,
+        reference,
+        status: "confirmed",
+        stage: 1,
+        is_round_trip: isRoundTrip ? 1 : 0,
+        return_pickup_at: returnPickupAt,
+        return_arrives_at: returnArrivesAt,
+      },
       provider,
       whatNext: [
         "Provider has confirmed your request",
         "Driver and escort assigned the day before pickup",
-        "We'll send you a reminder + live tracking link then",
+        isRoundTrip
+          ? "Return ride is locked in for after the appointment"
+          : "We'll send you a reminder + live tracking link then",
       ],
     },
     201,
