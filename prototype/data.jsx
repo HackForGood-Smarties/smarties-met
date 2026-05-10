@@ -2,7 +2,7 @@
 
 const TRANSLATIONS = {
   en: {
-    appName: "Smarties",
+    appName: "CareHop",
     tag: "Care, made simpler",
     nav: { home: "Home", trips: "Trips", profile: "Profile" },
 
@@ -165,7 +165,7 @@ const TRANSLATIONS = {
       acc: "Accessibility",
       bigText: "Larger text",
       ack: "Acknowledgement",
-      version: "Smarties demo · v0.4 · prototype",
+      version: "CareHop demo · v0.5 · prototype",
       changeElig: "Re-check eligibility",
       eligNote: "Subsidy estimate",
       subCodeHead: "Subsidy code",
@@ -198,7 +198,7 @@ const TRANSLATIONS = {
   },
 
   zh: {
-    appName: "Smarties",
+    appName: "CareHop",
     tag: "照护，更简单",
     nav: { home: "首页", trips: "行程", profile: "我的" },
     ob: {
@@ -329,7 +329,7 @@ const TRANSLATIONS = {
       acc: "辅助功能",
       bigText: "更大字号",
       ack: "鸣谢",
-      version: "Smarties 演示 · v0.4 · 原型",
+      version: "CareHop 演示 · v0.5 · 原型",
       changeElig: "重新评估资格",
       eligNote: "补贴估算",
       subCodeHead: "补贴码",
@@ -355,7 +355,7 @@ const TRANSLATIONS = {
   },
 
   ms: {
-    appName: "Smarties",
+    appName: "CareHop",
     tag: "Penjagaan, lebih mudah",
     nav: { home: "Utama", trips: "Perjalanan", profile: "Profil" },
     ob: {
@@ -486,7 +486,7 @@ const TRANSLATIONS = {
       acc: "Kebolehcapaian",
       bigText: "Saiz teks lebih besar",
       ack: "Penghargaan",
-      version: "Smarties demo · v0.4 · prototaip",
+      version: "CareHop demo · v0.5 · prototaip",
       changeElig: "Semak semula kelayakan",
       eligNote: "Anggaran subsidi",
       subCodeHead: "Kod subsidi",
@@ -512,7 +512,7 @@ const TRANSLATIONS = {
   },
 
   ta: {
-    appName: "Smarties",
+    appName: "CareHop",
     tag: "எளிமையான பராமரிப்பு",
     nav: { home: "முகப்பு", trips: "பயணங்கள்", profile: "சுயவிவரம்" },
     ob: {
@@ -643,7 +643,7 @@ const TRANSLATIONS = {
       acc: "அணுகுதன்மை",
       bigText: "பெரிய எழுத்து",
       ack: "நன்றி",
-      version: "Smarties demo · v0.4 · முன்மாதிரி",
+      version: "CareHop demo · v0.5 · முன்மாதிரி",
       changeElig: "தகுதி மீள்சோதனை",
       eligNote: "மானிய மதிப்பீடு",
       subCodeHead: "மானியக் குறியீடு",

@@ -1605,7 +1605,7 @@ function ProfilePage() {
                 spellCheck={false}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="SMRT.AXDyuVvb…"
+                placeholder="HOP.AXDyuVvb…"
                 className="focus-ring mt-3 w-full bg-paper2/60 border border-line rounded-lg px-3 py-2.5 text-ink font-mono text-[12px] leading-snug break-all"
               />
               {error && (
@@ -1710,10 +1710,10 @@ function SingpassLoginPage({ onLoggedIn }) {
   return (
     <div className="min-h-screen w-full bg-paper">
       <div className="max-w-[420px] mx-auto px-5 pt-10 pb-10 flex flex-col min-h-screen">
-        {/* Smarties brand strip */}
+        {/* CareHop brand strip */}
         <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-ink text-paper inline-flex items-center justify-center font-bold">S</div>
-          <p className="text-ink font-semibold text-[17px]">Smarties</p>
+          <div className="h-9 w-9 rounded-lg bg-ink text-paper inline-flex items-center justify-center font-bold">C</div>
+          <p className="text-ink font-semibold text-[17px]">CareHop</p>
           <span className="text-mute text-xs">· Care, made simpler</span>
         </div>
 
@@ -1724,7 +1724,7 @@ function SingpassLoginPage({ onLoggedIn }) {
           </div>
 
           <div className="p-6 text-center">
-            <p className="text-ink text-[19px] font-semibold">Log in to Smarties</p>
+            <p className="text-ink text-[19px] font-semibold">Log in to CareHop</p>
             <p className="text-mute text-sm mt-1.5 leading-snug">
               Sign in with your Singpass account to manage subsidies and book transport for your loved one.
             </p>
@@ -1829,10 +1829,10 @@ function PromoPage() {
                 spellCheck={false}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="SMRT.eyJ2IjoxLCJp…"
+                placeholder="HOP.AXDyuVvb…"
                 className="focus-ring mt-1 w-full bg-paper2/60 border border-line rounded-lg px-3 py-2.5 text-ink font-mono text-[12px] leading-snug break-all"
               />
-              <p className="text-mute text-[11px] mt-1">Codes start with <span className="font-mono">SMRT.</span> and are cryptographically signed by the issuer.</p>
+              <p className="text-mute text-[11px] mt-1">Codes start with <span className="font-mono">HOP.</span> and are cryptographically signed by the issuer.</p>
             </div>
             {error && (
               <div className="rounded-lg bg-danger/10 border border-danger/30 px-3 py-2 text-danger text-sm">
@@ -1854,7 +1854,7 @@ function PromoPage() {
               <Icon name="info" size={16} /> How does this work?
             </p>
             <p className="text-mute text-sm mt-1.5 leading-relaxed">
-              The issuer cryptographically signs the code with Ed25519. Smarties verifies it
+              The issuer cryptographically signs the code with Ed25519. CareHop verifies it
               against the issuer's public key — no online round-trip is needed to confirm authenticity.
               The code is bound to the senior's NRIC, so it can't be reused by someone else.
             </p>

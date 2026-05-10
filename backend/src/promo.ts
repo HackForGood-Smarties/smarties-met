@@ -3,7 +3,7 @@
 // agency). Anyone holding the issuer's public key can verify offline;
 // no online round-trip is needed.
 //
-// Code wire format:  SMRT.<base64url(packed payload)>.<base64url(64-byte sig)>
+// Code wire format:  HOP.<base64url(packed payload)>.<base64url(64-byte sig)>
 //
 // Compact binary payload (v1):
 //   1  byte   version (1)
@@ -67,7 +67,7 @@ export async function issueCode(req: IssueRequest): Promise<string> {
   const packed = packPayload(payload);
   const privKey = await importPrivKey();
   const sig = new Uint8Array(await crypto.subtle.sign("Ed25519", privKey, packed));
-  return `SMRT.${b64url(packed)}.${b64url(sig)}`;
+  return `HOP.${b64url(packed)}.${b64url(sig)}`;
 }
 
 export interface VerifyOk { ok: true; payload: PromoPayload }
@@ -76,7 +76,7 @@ export type VerifyResult = VerifyOk | VerifyErr;
 
 export async function verifyCode(code: string): Promise<VerifyResult> {
   const parts = code.trim().split(".");
-  if (parts.length !== 3 || parts[0] !== "SMRT") {
+  if (parts.length !== 3 || parts[0] !== "HOP") {
     return { ok: false, reason: "Code format not recognised" };
   }
   const [, payloadB64, sigB64] = parts;

@@ -1,4 +1,4 @@
-# Smarties — The Good Hack 2026
+# CareHop — The Good Hack 2026
 
 **Hackathon**: The Good Hack 2026 (GoodHub SEA × Open Government Products), 8–10 May 2026, Singapore.
 **Problem Statement 2 — Streamlining Eldercare**: How might we reduce manual and time-consuming tasks within the eldercare ecosystem so that more seniors are well-supported?
@@ -43,7 +43,7 @@ The 6 stages: Application sent → Confirmed by provider → Driver assigned →
 
 1. **Discovery gap** — many eligible seniors never apply for the AIC-coordinated MET subsidy. The signed-code flow lets the hospital Medical Social Worker (MSW) — the same role that certifies need today via the paper referral pipeline — issue an Ed25519-signed authorisation offline, redeemable in seconds rather than weeks. Polyclinic doctors and AIC Link officers can also issue under AIC's delegated authority.
 2. **Caregiver visibility gap** — phone-tag with provider replaced by a live, delivery-style stage tracker.
-3. **Default-Grab habit** — cost-compare screen converts a $32–$38 ride into a ~$8–$14 subsidised one (after applying a code).
+3. **Default-Grab habit** — cost-compare screen converts a $68–$120 round-trip Grab ride into a ~$8–$9 subsidised MET trip (after applying a code).
 
 ## Run locally
 
@@ -70,4 +70,4 @@ python3 -m http.server 5173
 
 ## Team
 
-Smarties — The Good Hack 2026.
+Smarties — The Good Hack 2026 (app: **CareHop**).

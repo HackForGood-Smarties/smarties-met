@@ -1,6 +1,6 @@
-# Smarties — Backend (Cloudflare Workers)
+# CareHop — Backend (Cloudflare Workers)
 
-API + live trip state machine for the Smarties caregiver app.
+API + live trip state machine for the CareHop caregiver app.
 
 ## Stack
 
