@@ -456,6 +456,12 @@ function TripNewPage() {
   const { t } = useI18n();
   const trip = window.AppData.TRIP; // fallback for cost numbers only
   const senior = window.AppData.SENIOR;
+  const meApi = useApi("/api/me");
+  const seniorFromApi = meApi.data && meApi.data.seniors && meApi.data.seniors[0];
+  const hasSubsidy =
+    seniorFromApi && typeof seniorFromApi.subsidy_pct === "number";
+  const metLow = hasSubsidy ? seniorFromApi.copay_low : 40;
+  const metHigh = hasSubsidy ? seniorFromApi.copay_high : 45;
   const initialDraft = useMemoP(() => loadDraft(), []);
 
   const [hospital, setHospital] = useStateP(
@@ -576,14 +582,23 @@ function TripNewPage() {
 
           {/* MET card */}
           <div className="relative rounded-2xl border-2 border-gold bg-white p-4 flex flex-col shadow-lift">
-            <div className="absolute -top-2.5 right-3"><Pill tone="gold"><Icon name="spark" size={12} /> {t("tn.metBadge")}</Pill></div>
+            {hasSubsidy && (
+              <div className="absolute -top-2.5 right-3"><Pill tone="gold"><Icon name="spark" size={12} /> {t("tn.metBadge")}</Pill></div>
+            )}
             <div className="flex items-center justify-between">
-              <p className="text-ink font-semibold text-sm">{t("tn.metHead")}</p>
+              <p className="text-ink font-semibold text-sm">{hasSubsidy ? t("tn.metHead") : "MET"}</p>
               <Icon name="van" size={18} className="text-ink" />
             </div>
             <div className="mt-3">
-              <p className="text-mute text-[15px] font-semibold line-through">${trip.metOriginal}</p>
-              <p className="text-ink text-[64px] font-bold leading-none tracking-tight">${trip.metPrice}</p>
+              {hasSubsidy && (
+                <p className="text-mute text-[15px] font-semibold line-through">${trip.metOriginal}</p>
+              )}
+              <p className="text-ink text-[64px] font-bold leading-none tracking-tight">
+                ${metLow}{metHigh !== metLow ? `–${metHigh}` : ""}
+              </p>
+              {!hasSubsidy && (
+                <p className="text-mute text-xs mt-1">Apply a subsidy code to save up to 80%.</p>
+              )}
             </div>
             <ul className="mt-4 space-y-1.5 text-ink text-[13px] leading-snug flex-1">
               {t("tn.metBullets").map((b, i) => (
