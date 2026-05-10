@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Smarties · Medical Escort & Transport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="vendor/tailwind.js"></script>
+<link rel="stylesheet" href="vendor/leaflet.css" />
+<script src="vendor/leaflet.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          paper: "#FAF7F2",
+          paper2: "#F2EDE3",
+          ink: "#0B2545",
+          ink2: "#13325E",
+          mute: "#5B6B82",
+          line: "#E4DCCC",
+          gold: "#D4A24C",
+          goldSoft: "#F6E7C5",
+          green: "#1F7A4D",
+          greenSoft: "#E3F1E8",
+          danger: "#B23A3A",
+        },
+        fontFamily: {
+          sans: ['Inter', 'Noto Sans SC', 'Noto Sans Tamil', 'system-ui', 'sans-serif'],
+        },
+        boxShadow: {
+          card: "0 1px 0 rgba(11,37,69,0.04), 0 1px 2px rgba(11,37,69,0.06)",
+          lift: "0 1px 0 rgba(11,37,69,0.04), 0 8px 24px -8px rgba(212,162,76,0.35), 0 2px 6px rgba(11,37,69,0.08)",
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { background: #EDE7DA; }
+  body {
+    font-family: 'Inter', 'Noto Sans SC', 'Noto Sans Tamil', system-ui, sans-serif;
+    color: #0B2545;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Focus ring used everywhere for a11y */
+  .focus-ring:focus-visible {
+    outline: 3px solid #D4A24C;
+    outline-offset: 2px;
+    border-radius: 12px;
+  }
+  button, a, input, select { -webkit-tap-highlight-color: transparent; }
+  /* Scrollbars subtle */
+  .phone-scroll::-webkit-scrollbar { width: 6px; }
+  .phone-scroll::-webkit-scrollbar-thumb { background: #d8cdb6; border-radius: 999px; }
+
+  /* tiny enter animation per route */
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .page-anim { animation: pageIn 220ms ease-out both; }
+
+  @keyframes pulseGold {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212,162,76,0.55); }
+    50%      { box-shadow: 0 0 0 10px rgba(212,162,76,0); }
+  }
+  .pulse-gold { animation: pulseGold 2s ease-in-out infinite; }
+
+  /* Stepper connector */
+  .step-line { background: linear-gradient(to bottom, #E4DCCC 0%, #E4DCCC 100%); }
+  .step-line.done { background: #1F7A4D; }
+  .step-line.active { background: linear-gradient(to bottom, #1F7A4D 0%, #D4A24C 100%); }
+
+  /* Trip map */
+  .smarties-map { width: 100%; height: 100%; background: #EDE7DA; }
+  .smarties-map .leaflet-tile-pane { filter: saturate(0.85) contrast(0.95); }
+  .smarties-pin { background: transparent; border: 0; }
+  .smarties-pin-home {
+    background: #0B2545; color: #FAF7F2; border-radius: 999px;
+    padding: 4px 10px 4px 8px; font-size: 12px; font-weight: 600; line-height: 1;
+    white-space: nowrap; box-shadow: 0 2px 8px rgba(11,37,69,.25);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .smarties-pin-hospital {
+    background: #D4A24C; color: #0B2545; border-radius: 999px;
+    padding: 4px 10px 4px 8px; font-size: 12px; font-weight: 700; line-height: 1;
+    white-space: nowrap; box-shadow: 0 2px 8px rgba(212,162,76,.4);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .smarties-pin-driver {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #1F7A4D; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; line-height: 1;
+    box-shadow: 0 0 0 6px rgba(31,122,77,.18), 0 4px 10px rgba(11,37,69,.25);
+    transform: translate(-2px, -2px);
+  }
+  .smarties-pin-driver::after {
+    content: ""; position: absolute; inset: -4px;
+    border-radius: 50%; border: 2px solid rgba(31,122,77,.45);
+    animation: driverPulse 1.6s ease-out infinite;
+  }
+  @keyframes driverPulse {
+    0% { transform: scale(.9); opacity: .8; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="env.js"></script>
+<script src="vendor/react.development.js"></script>
+<script src="vendor/react-dom.development.js"></script>
+<script src="vendor/babel.min.js"></script>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel" src="pages.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
