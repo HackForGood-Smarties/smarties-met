@@ -30,8 +30,8 @@ tripRoutes.post("/quote", async (c) => {
   const senior = await loadSenior(c.env, body.seniorId, c.get("caregiverId"));
   if ("error" in senior) return c.json({ error: senior.error }, senior.status);
 
-  const grabLow = 32;
-  const grabHigh = 38;
+  const grabLow = 70;
+  const grabHigh = 80;
   // No subsidy applied yet → MET shows the un-subsidised base fare so the
   // cost-compare screen is honest. Once a promo code is redeemed,
   // subsidy_pct + copay_* are populated and MET becomes the cheap option.
@@ -203,8 +203,8 @@ tripRoutes.post("/", async (c) => {
       drv.plate,
       esc,
       copay,
-      body.grabLow ?? 32,
-      body.grabHigh ?? 38,
+      body.grabLow ?? 70,
+      body.grabHigh ?? 80,
     )
     .run();
 

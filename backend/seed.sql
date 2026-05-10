@@ -63,13 +63,13 @@ INSERT INTO trips (
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital', 'Outram Rd, Singapore 169608',
    '2026-05-15T09:00:00+08:00', '2026-05-15T09:35:00+08:00',
    'Mr. Tan', 'Toyota Hiace', 'SGW 8421C', 'Mei Ling',
-   42, 32, 38, 1),
+   42, 70, 80, 1),
   ('trip_upcoming_2', 'MET-77B0C2', 'cg_weiming', 'sn_madamlim', 'blossom',
    'confirmed', 2,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic', '21 Ang Mo Kio Central 2, Singapore 569666',
    '2026-05-21T14:30:00+08:00', '2026-05-21T14:50:00+08:00',
    'Ms. Wong', 'Toyota Hiace', 'SGZ 5142A', 'Suriani',
-   42, 18, 22, 0);
+   42, 50, 60, 0);
 
 -- Event log for the hero trip — stages 0, 1, 2 already happened.
 INSERT INTO trip_events (trip_id, stage, status, note, occurred_at) VALUES
@@ -88,10 +88,10 @@ INSERT INTO trips (
 ) VALUES
   ('trip_past_1', 'MET-19BCDE', 'cg_weiming', 'sn_madamlim', 'touch',  'completed', 5,
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital',
-   '2026-04-17T08:30:00+08:00', '2026-04-17T09:10:00+08:00', 12, 32, 38),
+   '2026-04-17T08:30:00+08:00', '2026-04-17T09:10:00+08:00', 12, 70, 80),
   ('trip_past_2', 'MET-12FA3C', 'cg_weiming', 'sn_madamlim', 'blossom','completed', 5,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic',
-   '2026-03-20T09:00:00+08:00', '2026-03-20T09:15:00+08:00', 8,  18, 22),
+   '2026-03-20T09:00:00+08:00', '2026-03-20T09:15:00+08:00', 8,  50, 60),
   ('trip_past_3', 'MET-0AA771', 'cg_weiming', 'sn_madamlim', 'touch',  'completed', 5,
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital',
-   '2026-02-04T08:30:00+08:00', '2026-02-04T09:05:00+08:00', 12, 32, 38);
+   '2026-02-04T08:30:00+08:00', '2026-02-04T09:05:00+08:00', 12, 70, 80);
