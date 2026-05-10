@@ -1510,16 +1510,21 @@ function SingpassLoginPage({ onLoggedIn }) {
 
   const onLogin = () => {
     setPhase("submitting");
-    setTimeout(() => {
-      saveSession({
-        nric: "S1234567A",
-        name: "Wei Ming",
-        prefix: "Mr",
-        loginAt: new Date().toISOString(),
+    saveSession({
+      nric: "S1234567A",
+      name: "Wei Ming",
+      prefix: "Mr",
+      loginAt: new Date().toISOString(),
+    });
+    // Reset the demo state to a clean baseline (no subsidy, only seeded
+    // trips) on every fresh login. apiFetch reads the session header we
+    // just saved.
+    apiFetch("/api/demo/reset-all", { method: "POST" })
+      .catch(() => {})
+      .finally(() => {
+        setPhase("done");
+        setTimeout(() => onLoggedIn && onLoggedIn(), 250);
       });
-      setPhase("done");
-      setTimeout(() => onLoggedIn && onLoggedIn(), 250);
-    }, 1200);
   };
 
   return (
