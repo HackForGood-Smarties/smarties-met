@@ -59,27 +59,26 @@ INSERT INTO trips (
   copay, grab_low, grab_high, notify_home_safe
 ) VALUES
   ('trip_upcoming', 'MET-2A4F19', 'cg_weiming', 'sn_madamlim', 'touch',
-   'confirmed', 2,
+   'confirmed', 1,
    '234 Ang Mo Kio Ave 3', 'Singapore General Hospital', 'Outram Rd, Singapore 169608',
    '2026-05-15T09:00:00+08:00', '2026-05-15T09:35:00+08:00',
-   'Mr. Tan', 'Toyota Hiace', 'SGW 8421C', 'Mei Ling',
+   NULL, NULL, NULL, NULL,
    42, 70, 80, 1),
   ('trip_upcoming_2', 'MET-77B0C2', 'cg_weiming', 'sn_madamlim', 'blossom',
-   'confirmed', 2,
+   'confirmed', 1,
    '234 Ang Mo Kio Ave 3', 'AMK Polyclinic', '21 Ang Mo Kio Central 2, Singapore 569666',
    '2026-05-21T14:30:00+08:00', '2026-05-21T14:50:00+08:00',
-   'Ms. Wong', 'Toyota Hiace', 'SGZ 5142A', 'Suriani',
+   NULL, NULL, NULL, NULL,
    42, 50, 60, 0);
 
--- Event log for the hero trip — stages 0, 1, 2 already happened.
+-- Event log: provider confirmed both upcoming trips. Driver assignment
+-- happens the day before pickup, so it's not in the timeline yet.
 INSERT INTO trip_events (trip_id, stage, status, note, occurred_at) VALUES
   ('trip_upcoming', 0, 'pending',   'Application sent to TOUCH Community Services', '2026-05-09T18:42:00+08:00'),
   ('trip_upcoming', 1, 'confirmed', 'Confirmed by provider',                          '2026-05-09T20:11:00+08:00'),
-  ('trip_upcoming', 2, 'confirmed', 'Driver Mr. Tan + escort Mei Ling assigned',      '2026-05-14T10:00:00+08:00'),
 
   ('trip_upcoming_2', 0, 'pending',   'Application sent to Blossom Seeds',     '2026-05-10T09:15:00+08:00'),
-  ('trip_upcoming_2', 1, 'confirmed', 'Confirmed by provider',                  '2026-05-10T09:48:00+08:00'),
-  ('trip_upcoming_2', 2, 'confirmed', 'Driver Ms. Wong + escort Suriani assigned', '2026-05-10T10:02:00+08:00');
+  ('trip_upcoming_2', 1, 'confirmed', 'Confirmed by provider',                  '2026-05-10T09:48:00+08:00');
 
 -- 3 past trips — populates the Trips list "Past" section.
 INSERT INTO trips (

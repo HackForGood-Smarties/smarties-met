@@ -947,10 +947,12 @@ function TripTrackerPage({ tripId }) {
             <div className="text-right">
               <Pill tone={isFinal && tripData.status === "cancelled" ? "neutral" : "gold"} className={isFinal && tripData.status === "cancelled" ? "!bg-danger/20 !text-danger" : "!bg-gold !text-ink"}>{headerLabel}</Pill>
               <p className="text-paper/70 text-xs mt-2">Ref · {ref}</p>
-              <p className="text-paper/60 text-[10px] mt-1 inline-flex items-center gap-1 font-semibold uppercase tracking-wide">
-                <span className={`h-1.5 w-1.5 rounded-full ${conn === "live" ? "bg-green animate-pulse" : conn === "connecting" ? "bg-gold" : conn === "done" ? "bg-mute" : "bg-mute"}`} />
-                {conn === "live" ? "Live" : conn === "connecting" ? "Connecting" : conn === "done" ? "Archived" : "Offline (sim)"}
-              </p>
+              {active >= 2 && !isFinal && (
+                <p className="text-paper/60 text-[10px] mt-1 inline-flex items-center gap-1 font-semibold uppercase tracking-wide">
+                  <span className={`h-1.5 w-1.5 rounded-full ${conn === "live" ? "bg-green animate-pulse" : conn === "connecting" ? "bg-gold" : "bg-mute"}`} />
+                  {conn === "live" ? "Live" : conn === "connecting" ? "Connecting" : "Offline (sim)"}
+                </p>
+              )}
             </div>
           </div>
         </div>

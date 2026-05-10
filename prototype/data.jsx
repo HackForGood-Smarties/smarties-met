@@ -93,7 +93,7 @@ const TRANSLATIONS = {
 
     // tracker
     tk: {
-      title: "Live trip status",
+      title: "Trip details",
       eta: "ETA",
       drvAssigned: "Driver assigned",
       driver: "Driver",
@@ -261,7 +261,7 @@ const TRANSLATIONS = {
       n3: "出行前一晚发送提醒，并开始实时追踪",
     },
     tk: {
-      title: "实时行程",
+      title: "行程详情",
       eta: "预计到达",
       drvAssigned: "已分配司机",
       driver: "司机", escort: "陪同员", vehicle: "车辆",
@@ -409,7 +409,7 @@ const TRANSLATIONS = {
       n3: "Peringatan + jejak pemandu malam sebelumnya",
     },
     tk: {
-      title: "Status perjalanan",
+      title: "Butiran perjalanan",
       eta: "Anggaran tiba",
       drvAssigned: "Pemandu ditetapkan",
       driver: "Pemandu", escort: "Pengiring", vehicle: "Kenderaan",
@@ -557,7 +557,7 @@ const TRANSLATIONS = {
       n3: "முந்திய இரவே நினைவூட்டல் + நேரடி கண்காணிப்பு",
     },
     tk: {
-      title: "பயண நிலை",
+      title: "பயண விவரங்கள்",
       eta: "எதிர்பார்க்கப்படும்",
       drvAssigned: "ஓட்டுநர் ஒதுக்கப்பட்டார்",
       driver: "ஓட்டுநர்", escort: "துணை", vehicle: "வாகனம்",
